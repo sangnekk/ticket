@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  body {
+    @apply bg-dark-tertiary text-text-normal font-sans antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-dark-tertiary rounded;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-dark-primary;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded transition-all duration-200 relative overflow-hidden;
+  }
+
+  .btn-primary {
+    @apply bg-discord-blurple text-white shadow-lg shadow-discord-blurple/30 hover:bg-discord-blurple-hover hover:shadow-discord-blurple/40;
+  }
+
+  .btn-secondary {
+    @apply bg-dark-active text-text-normal hover:bg-dark-hover;
+  }
+
+  .form-input {
+    @apply w-full px-3 py-2.5 bg-dark-tertiary border border-transparent rounded text-text-normal text-sm transition-all duration-200;
+    @apply hover:border-dark-hover focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple focus:outline-none;
+  }
+
+  .form-textarea {
+    @apply form-input resize-y min-h-[80px] font-sans leading-relaxed;
+  }
+}

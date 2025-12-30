@@ -1,0 +1,257 @@
+{
+  "hello": "Hello",
+  "welcome": "Welcome to {0}",
+  "goodbye": "Goodbye",
+  "commands": {
+    "help": {
+      "description": "Display command list",
+      "usage": "help [command]",
+      "aliases": ["h", "commands"],
+      "examples": ["help", "help ping"]
+    }
+  },
+  "error_general": "❌ Error",
+  "success_general": "✅ Success",
+  "desc": {
+    "help": "Display command list or information about a specific command",
+    "ping": "Check bot latency",
+    "language": "View/edit bot language",
+    "example": "Example command using all system features",
+    "leave": "Leave the server",
+    "server": "Display server information",
+    "enable": "Enable a command or command group",
+    "disable": "Disable a command or command group",
+    "reload": "Reload a command or all commands",
+    "restart": "Restart the bot"
+  },
+  "error": {
+    "command_disabled": "❌ Command {command} has been disabled.",
+    "folder_disabled": "❌ This command belongs to a disabled folder.",
+    "error": "An error occurred while executing the command: {error}",
+    "help": {
+      "cmd_not_found": "❌ Command `{cmd}` does not exist."
+    },
+    "language": "Please select a language: {lang}",
+    "database": "An error occurred while accessing the database: {error}",
+    "leave": "❌ Cannot leave this server.",
+    "enable": {
+      "already_enabled": "❌ This command is already enabled.",
+      "not_found": "❌ Command or command group not found."
+    },
+    "disable": {
+      "already_disabled": "❌ This command is already disabled.",
+      "not_found": "❌ Command or command group not found.",
+      "cannot_disable": "❌ Cannot disable essential commands."
+    },
+    "reload": {
+      "not_found": "❌ Command not found.",
+      "failed": "❌ Failed to reload command: {error}"
+    },
+    "restart": "❌ Failed to restart the bot: {error}",
+    "initialize": "Error during initialization: {error}",
+    "command_load": "Error loading command {file}: {error}",
+    "event_load": "Error loading event {file}: {error}",
+    "websocket": "The WebSocket encountered an error: {error}",
+    "unhandled_rejection": "Unhandled promise rejection: {error}",
+    "check_disabled_status": "Error checking disabled status: {error}",
+    "command_execution": "Error executing command: {error}",
+    "db": {
+      "add_disabled_command": "Error adding command to disabled list: {error}",
+      "remove_disabled_command": "Error removing command from disabled list: {error}",
+      "update_guild_settings": "Error updating settings for guild {guildId}: {error}",
+      "update_user_settings": "Error updating settings for user {userId}: {error}",
+      "create_log": "Error creating log: {error}"
+    }
+  },
+  "success": {
+    "language": "Current guild language is: `{lang}`",
+    "leave": "👋 Left the server.",
+    "enable": {
+      "command": "✅ Enabled command `{command}`.",
+      "category": "✅ Enabled all commands in category `{category}`."
+    },
+    "disable": {
+      "command": "✅ Disabled command `{command}`.",
+      "category": "✅ Disabled all commands in category `{category}`."
+    },
+    "reload": {
+      "command": "✅ Reloaded command `{command}`.",
+      "all": "✅ Reloaded all {count} commands."
+    },
+    "restart": "🔄 Restarting the bot..."
+  },
+  "help": {
+    "title": "🛠️ Help Menu",
+    "description": "Hello! I'm {displayName}, a bot created by {owner}.\nYou can use `{prefix} help <command>` to get more information about a command.",
+    "footer": "Use {prefix} help <command> for more information about a command",
+    "detail": "**Description:** {content}\n**Usage:** `{usage}`\n**Examples:** {examples}\n**Aliases:** {aliases}\n**Cooldown:** {cooldown}"
+  },
+  "ping": {
+    "checking": "Checking latency...",
+    "result": "🏓 Pong! Latency: {pingTime}ms | API: {apiPing}ms",
+    "bot_latency": "Bot Latency",
+    "api_latency": "API Latency"
+  },
+  "server": {
+    "title": "📊 Server Information",
+    "name": "Server name",
+    "id": "ID",
+    "owner": "Owner",
+    "members": "Members",
+    "channels": "Channels",
+    "roles": "Roles",
+    "creation_date": "Creation date",
+    "boost_level": "Boost level",
+    "boost_count": "Boost count"
+  },
+  "example": {
+    "title": "🎯 Example Command",
+    "description": "This is an example of how to create a command with all parameters and features:",
+    "basic_params": "1. Basic Parameters",
+    "basic_params_detail": "`name`, `description`, `usage`, `examples`, `aliases`",
+    "advanced_params": "2. Advanced Parameters",
+    "advanced_params_detail": "`cooldown`, `permissions`, `category`",
+    "help_integration": "3. Help Integration",
+    "help_integration_detail": "All parameters are displayed in `help example`",
+    "interaction": "4. Interaction Handling",
+    "interaction_detail": "Support for buttons, select menus, modals...",
+    "result": "5. Return Results",
+    "result_detail": "Support for embeds, files, components...",
+    "docs": "6. Documentation",
+    "docs_detail": "See `example.js` file to learn how to create commands",
+    "success_button": "✅ Operation successful!",
+    "error_button": "❌ An error occurred!",
+    "info_button": "Information",
+    "info_desc": "This is detailed information about the example command.",
+    "creator": "Creator",
+    "time": "Time"
+  },
+  "use_many": {
+    "dont_have": "None",
+    "dont_have_data": "No data",
+    "searching": "Searching...",
+    "request_by": "Requested by"
+  },
+  "handler": {
+    "owner_only": "❌ **|** Only the bot owner can use this command!",
+    "dev_only": "❌ **|** Only bot developers can use this command!",
+    "voice_only": "❌ **|** You need to join a voice channel to use this command!",
+    "same_room": "❌ **|** The bot is already being used. Please use `.checkbot` to see available bots or join the same channel.",
+    "nsfw_only": "❌ **|** This command can only be used in NSFW channels!",
+    "no_permission": "❌ **|** You don't have permission to use this command! Required permissions: {permissions}",
+    "bot_no_permission": "❌ **|** The bot doesn't have permission to execute this command! Required permissions: {permissions}",
+    "cooldown": "❌ Please wait {time} more seconds before using the `{command}` command."
+  },
+  "language": {
+    "available": "Available languages",
+    "change_guide": "Use {prefix}language <language> to change",
+    "changed": "Language changed from `{old}` to `{new}`"
+  },
+  "load": {
+    "slash_command": "Loaded slash command: {name}",
+    "prefix_command": "Loaded prefix command: {name}",
+    "event": "Loaded event: {name}"
+  },
+  "ready": "Ready! Logged in as {tag}",
+  "database": {
+    "closing": "Closing database connection..."
+  },
+  "login": {
+    "success": "Bot is now online and running!",
+    "error": "Error logging in: {error}",
+    "success_multiple": "Bot #{index} is now online and running!",
+    "error_multiple": "Error logging in Bot #{index}: {error}",
+    "no_token": "No valid token(s) found in config.json"
+  },
+  "prefix": {
+    "title": "Current Prefix",
+    "current": "This server's prefix is: `{prefix}`",
+    "change_guide": "To change the prefix, use: `{prefix}prefix <new prefix>`",
+    "examples": "Examples",
+    "examples_list": "`{prefix}prefix ?`\n`{prefix}prefix /`\n`{prefix}prefix bot.`",
+    "no_permission": "No Permission",
+    "no_permission_desc": "You need **Manage Server** permission to change the prefix!",
+    "invalid_length": "Invalid Prefix",
+    "invalid_length_desc": "Prefix cannot be longer than 10 characters!",
+    "invalid_chars": "Invalid Prefix",
+    "invalid_chars_desc": "Prefix cannot contain spaces or newline characters!",
+    "updated": "Prefix Updated",
+    "updated_desc": "Server prefix has been changed from `{oldPrefix}` to `{newPrefix}`\n\nYou can now use commands with the new prefix: `{newPrefix}ping`",
+    "note": "Note",
+    "note_desc": "The new prefix will take effect immediately for all users in this server.",
+    "error": "Error",
+    "error_desc": "An error occurred while processing the command. Please try again later!"
+  },
+  "help": {
+    "no_commands": "No commands found. Please check the command folder structure.",
+    "select_category": "Select command category",
+    "category_description": "View commands in {category} category",
+    "title": "🤖 Command List",
+    "description": "Select a category to view detailed commands.",
+    "total_categories": "📊 Total Categories",
+    "total_commands": "📋 Total Commands",
+    "categories_count": "{count} categories",
+    "commands_count": "{count} commands",
+    "footer": "Bot developed by sang0023"
+  },
+  "ticket": {
+    "setup": {
+      "only_owner_dev": "❌ Only server Owner or Developer can use this command!",
+      "success": "✅ Ticket system has been set up successfully!",
+      "success_detail": "📍 Channel: {channel}\n📁 Category 1: {category1}\n📁 Category 2: {category2}\n👥 Staff Role: {staffRole}",
+      "dm_role": "🔑 DM Role: {dmRole}",
+      "error": "❌ An error occurred while setting up the ticket system!",
+      "embed_title": "🎫 Ticket System",
+      "embed_description": "**Welcome to the support system!**\n\nPlease select the ticket type that suits your needs:\n\n📦 **Purchase** - Create a ticket to buy products\n❓ **Support** - Create a ticket for support\n\n*Note: You can only create 1 ticket per type.*",
+      "button_buy": "📦 Purchase",
+      "button_support": "❓ Support"
+    },
+    "create": {
+      "not_setup": "❌ Ticket system has not been set up!",
+      "already_have": "❌ You already have an open {type} ticket! {channel}",
+      "type_buy": "Purchase",
+      "type_support": "Support",
+      "no_category": "❌ Cannot find category to create ticket!",
+      "success": "✅ Ticket created successfully! {channel}",
+      "error": "❌ An error occurred while creating the ticket!",
+      "welcome_title": "🎫 {type} Ticket",
+      "welcome_description": "Hello {user}!\n\nThank you for creating a ticket. Staff will assist you as soon as possible.\n\n**Ticket type:** {typeEmoji} {type}\n**Ticket ID:** #{ticketNumber}"
+    },
+    "claim": {
+      "not_setup": "❌ Ticket system has not been set up!",
+      "not_staff": "❌ You don't have permission to claim tickets!",
+      "not_ticket": "❌ This is not a ticket channel!",
+      "already_claimed": "❌ This ticket has already been claimed by {staff}!",
+      "success": "✅ You have successfully claimed this ticket!",
+      "error": "❌ An error occurred while claiming the ticket!",
+      "embed_title": "✅ Ticket Claimed",
+      "embed_description": "Staff {staff} has taken over this ticket."
+    },
+    "close": {
+      "not_ticket": "❌ This is not a ticket channel!",
+      "no_config": "❌ Ticket configuration not found!",
+      "denied_title": "❌ Action Denied",
+      "denied_description": "Sorry, please leave a review before closing the ticket.\n\nAfter that, please tag a Staff member so they can close your ticket.",
+      "deleting": "🗑️ Deleting ticket...",
+      "error": "❌ An error occurred while closing the ticket!",
+      "embed_title": "🔒 Close Ticket",
+      "embed_description": "Do you want to close this ticket?\n\n**Note:** If the ticket has been claimed, only Staff can delete it.",
+      "button_close": "🗑️ Close Ticket"
+    },
+    "dm": {
+      "not_setup": "❌ Ticket system has not been set up!",
+      "no_permission": "❌ You don't have permission to use this command!",
+      "not_ticket": "❌ This is not a ticket channel!",
+      "no_user": "❌ Please mention a user! Syntax: `+dm @user <reason>`",
+      "no_reason": "❌ Please enter a reason! Syntax: `+dm @user <reason>`",
+      "error": "❌ An error occurred!",
+      "ticket_embed_title": "✅ Order Completed",
+      "ticket_embed_description": "Order for {user} has been completed!\n\n**Order:** {reason}\n**Processed by:** {staff}",
+      "button_delete": "🗑️ Delete Ticket",
+      "dm_embed_title": "📦 Notification from J & D Store",
+      "dm_embed_description": "Shop owner **{staff}** has sent you a message!\n\n**Your order has been completed**\n\n**Order:** {reason}\n\nPlease leave us a review at <#1384052073439690813>\n\nThank you for shopping at **J & D Store**\n\nYour ticket: {channel}",
+      "dm_success": "✅ DM notification sent to {user}!",
+      "dm_failed": "⚠️ Cannot send DM to {user}. User may have DMs disabled."
+    }
+  }
+}

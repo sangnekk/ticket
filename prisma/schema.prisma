@@ -1,0 +1,80 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../generated"
+  previewFeatures = ["postgresqlExtensions", "prismaSchemaFolder", "relationJoins"]
+  binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+  engineType      = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Model cho lệnh bị vô hiệu hóa
+model DisabledCommand {
+  id        Int      @id @default(autoincrement())
+  commandId String
+  guildId   String?  // null = disable toàn cục, có giá trị = disable theo guild
+  channelId String?  // null = disable toàn guild, có giá trị = disable theo channel
+  createdAt DateTime @default(now())
+  
+  @@unique([commandId, guildId, channelId])
+  @@index([commandId])
+  @@index([guildId, channelId])
+}
+
+// Model ví dụ cho guild settings
+model GuildSettings {
+  id              Int     @id @default(autoincrement())
+  guildId         String  @unique
+  prefix          String  @default("!")
+  language        String  @default("Vietnamese")
+  welcomeChannel  String?
+  logChannelId    String?
+  moderationRoles String?
+}
+
+// Ticket System Models
+model TicketConfig {
+  id              Int      @id @default(autoincrement())
+  guildId         String   @unique
+  channelId       String   // Channel để gửi embed tạo ticket
+  categoryId1     String   // Category chính
+  categoryId2     String   // Category dự phòng
+  staffRoleId     String   // Role staff
+  dmRoleId        String?  // Role được phép dùng +dm (ngoài admin)
+  ticketCounter   Int      @default(0) // Đếm số ticket để tạo tên
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Ticket {
+  id            Int       @id @default(autoincrement())
+  guildId       String
+  channelId     String    @unique // ID của channel ticket
+  userId        String    // User tạo ticket
+  buttonType    String    // Loại button (button1 hoặc button2)
+  ticketNumber  Int       // Số thứ tự ticket
+  claimedBy     String?   // Staff đã claim ticket
+  status        String    @default("open") // open, closed
+  createdAt     DateTime  @default(now())
+  closedAt      DateTime?
+
+  // Không dùng unique constraint vì user có thể tạo nhiều ticket sau khi đóng
+  // Logic check ticket đang mở được xử lý trong code (buttons/ticketCreate.js)
+  @@index([guildId])
+  @@index([userId])
+  @@index([guildId, userId, buttonType, status]) // Index để query nhanh hơn
+}
+
+// Lưu text override theo từng guild + key
+model GuildTextOverride {
+  guildId   String
+  key       String   // ví dụ: "events.slash_response.log_message"
+  text      String   // nội dung override
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([guildId, key])
+}

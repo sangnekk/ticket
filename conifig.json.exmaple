@@ -1,0 +1,27 @@
+{
+  "token": "",
+  "Ownerid":"",
+  "clientId": "",
+  "defaultLanguage": "Vietnamese",
+  "embedColor": "#3498db",
+  "DevID": "920508073423028274",
+  "debug": false,
+  "logChannelId": "",
+  "sharding": false,
+  "clustering": false,
+  "cluster": {
+    "totalShards": "auto",
+    "shardsPerCluster": 2,
+    "totalClusters": "auto"
+  },
+  "redis": {
+    "host": "localhost",
+    "port": 6379,
+    "password": "",
+    "db": 0
+  },
+  "autoReload": true,
+  "watchFiles": [
+    "**/*.js"
+  ]
+}

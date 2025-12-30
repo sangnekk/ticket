@@ -1,0 +1,249 @@
+{
+	"error_general": "❌ Lỗi",
+	"success_general": "✅ Thành công",
+	"desc": {
+		"help": "Hiển thị danh sách lệnh hoặc thông tin về một lệnh cụ thể",
+		"ping": "Kiểm tra độ trễ của bot",
+		"language": "Xem/chỉnh sửa ngôn ngữ của bot",
+		"example": "Ví dụ về lệnh sử dụng đầy đủ tính năng của hệ thống",
+		"leave": "Rời khỏi server",
+		"server": "Hiển thị thông tin về server",
+		"enable": "Bật một lệnh hoặc nhóm lệnh",
+		"disable": "Tắt một lệnh hoặc nhóm lệnh",
+		"reload": "Tải lại một lệnh hoặc tất cả các lệnh",
+		"restart": "Khởi động lại bot"
+	},
+	"error": {
+		"command_disabled": "❌ Lệnh {command} đã bị vô hiệu hóa.",
+		"folder_disabled": "❌ Lệnh này thuộc thư mục đã bị vô hiệu hóa.",
+		"error": "Đã xảy ra lỗi khi thực thi lệnh: {cmd}",
+		"help": {
+			"cmd_not_found": "❌ Lệnh `{cmd}` không tồn tại."
+		},
+		"language": "Vui lòng chọn ngôn ngữ: {lang}",
+		"database": "Đã xảy ra lỗi khi truy cập cơ sở dữ liệu: {error}",
+		"leave": "❌ Không thể rời khỏi server này.",
+		"enable": {
+			"already_enabled": "❌ Lệnh này đã được bật rồi.",
+			"not_found": "❌ Không tìm thấy lệnh hoặc nhóm lệnh."
+		},
+		"disable": {
+			"already_disabled": "❌ Lệnh này đã bị tắt rồi.",
+			"not_found": "❌ Không tìm thấy lệnh hoặc nhóm lệnh.",
+			"cannot_disable": "❌ Không thể tắt lệnh thiết yếu."
+		},
+		"reload": {
+			"not_found": "❌ Không tìm thấy lệnh.",
+			"failed": "❌ Tải lại lệnh thất bại: {error}"
+		},
+		"restart": "❌ Không thể khởi động lại bot: {error}",
+		"initialize": "Lỗi khi khởi tạo: {error}",
+		"command_load": "Lỗi khi tải lệnh {file}: {error}",
+		"event_load": "Lỗi khi tải sự kiện {file}: {error}",
+		"websocket": "WebSocket gặp lỗi: {error}",
+		"unhandled_rejection": "Lỗi promise không được xử lý: {error}",
+		"check_disabled_status": "Lỗi khi kiểm tra trạng thái vô hiệu hóa: {error}",
+		"command_execution": "Lỗi khi thực thi lệnh: {error}",
+		"db": {
+			"add_disabled_command": "Lỗi khi thêm lệnh vào danh sách vô hiệu hóa: {error}",
+			"remove_disabled_command": "Lỗi khi xóa lệnh khỏi danh sách vô hiệu hóa: {error}",
+			"update_guild_settings": "Lỗi khi cập nhật thiết lập cho guild {guildId}: {error}",
+			"update_user_settings": "Lỗi khi cập nhật thiết lập cho user {userId}: {error}",
+			"create_log": "Lỗi khi tạo log: {error}"
+		}
+	},
+	"success": {
+		"language": "Ngôn ngữ hiện tại của guild là: `{lang}`",
+		"leave": "👋 Đã rời khỏi server.",
+		"enable": {
+			"command": "✅ Đã bật lệnh `{command}`.",
+			"category": "✅ Đã bật tất cả các lệnh trong nhóm `{category}`."
+		},
+		"disable": {
+			"command": "✅ Đã tắt lệnh `{command}`.",
+			"category": "✅ Đã tắt tất cả các lệnh trong nhóm `{category}`."
+		},
+		"reload": {
+			"command": "✅ Đã tải lại lệnh `{command}`.",
+			"all": "✅ Đã tải lại tất cả {count} lệnh."
+		},
+		"restart": "🔄 Đang khởi động lại bot..."
+	},
+	"ping": {
+		"checking": "Đang kiểm tra độ trễ...",
+		"result": "🏓 Pong! Độ trễ: {pingTime}ms | API: {apiPing}ms",
+		"bot_latency": "Độ trễ của Bot",
+		"api_latency": "Độ trễ của API"
+	},
+	"server": {
+		"title": "📊 Thông tin Server",
+		"name": "Tên server",
+		"id": "ID",
+		"owner": "Chủ sở hữu",
+		"members": "Số thành viên",
+		"channels": "Số kênh",
+		"roles": "Số vai trò",
+		"creation_date": "Ngày tạo",
+		"boost_level": "Cấp độ boost",
+		"boost_count": "Số lượng boost"
+	},
+	"example": {
+		"title": "🎯 Ví dụ về Lệnh Mẫu",
+		"description": "Đây là một ví dụ về cách tạo lệnh với đầy đủ các thông số và tính năng:",
+		"basic_params": "1. Thông số cơ bản",
+		"basic_params_detail": "`name`, `description`, `usage`, `examples`, `aliases`",
+		"advanced_params": "2. Thông số nâng cao",
+		"advanced_params_detail": "`cooldown`, `permissions`, `category`",
+		"help_integration": "3. Tích hợp với Help",
+		"help_integration_detail": "Tất cả thông số đều được hiển thị trong `help example`",
+		"interaction": "4. Xử lý Tương tác",
+		"interaction_detail": "Hỗ trợ buttons, select menus, modals...",
+		"result": "5. Trả về Kết quả",
+		"result_detail": "Hỗ trợ embeds, files, components...",
+		"docs": "6. Tài liệu",
+		"docs_detail": "Xem file `example.js` để biết cách tạo lệnh",
+		"success_button": "✅ Thao tác thành công!",
+		"error_button": "❌ Đã xảy ra lỗi!",
+		"info_button": "Thông tin",
+		"info_desc": "Đây là thông tin chi tiết về lệnh example.",
+		"creator": "Người tạo",
+		"time": "Thời gian"
+	},
+	"use_many": {
+		"dont_have": "Không có",
+		"dont_have_data": "Không có dữ liệu",
+		"searching": "Đang tìm kiếm...",
+		"request_by": "Yêu cầu bởi"
+	},
+	"handler": {
+		"owner_only": "❌ **|** Chỉ có chủ sở hữu bot mới có thể sử dụng lệnh này!",
+		"dev_only": "❌ **|** Chỉ có nhà phát triển bot mới có thể sử dụng lệnh này!",
+		"voice_only": "❌ **|** Bạn cần tham gia một kênh voice để sử dụng lệnh này!",
+		"same_room": "❌ **|** Bot đã có người sử dụng, vui lòng sài `.checkbot` để xem và sài bot khác hoặc vô chung phòng với bot.",
+		"nsfw_only": "❌ **|** Lệnh này chỉ có thể được sử dụng trong kênh nsfw!",
+		"no_permission": "❌ **|** Bạn không có quyền sử dụng lệnh này! Cần quyền: {permissions}",
+		"bot_no_permission": "❌ **|** Bot không có quyền thực hiện lệnh này! Cần quyền: {permissions}",
+		"cooldown": "❌ Vui lòng đợi {time} giây nữa trước khi sử dụng lệnh `{command}` này."
+	},
+	"language": {
+		"available": "Ngôn ngữ hiện có",
+		"change_guide": "Sử dụng {prefix}language <ngôn_ngữ> để thay đổi",
+		"changed": "Đã thay đổi ngôn ngữ từ `{old}` sang `{new}`"
+	},
+	"load": {
+		"slash_command": "Đã tải lệnh slash: {name}",
+		"prefix_command": "Đã tải lệnh prefix: {name}",
+		"event": "Đã tải sự kiện: {name}"
+	},
+	"ready": "Sẵn sàng! Đăng nhập với tên {tag}",
+	"database": {
+		"closing": "Đang đóng kết nối database..."
+	},
+	"login": {
+		"success": "Bot đã online và đang chạy!",
+		"error": "Lỗi khi đăng nhập: {error}",
+		"success_multiple": "Bot #{index} đã online và đang chạy!",
+		"error_multiple": "Lỗi khi đăng nhập Bot #{index}: {error}",
+		"no_token": "Không tìm thấy token hợp lệ trong config.json"
+	},
+	"prefix": {
+		"title": "Prefix hiện tại",
+		"current": "Prefix của server này là: `{prefix}`",
+		"change_guide": "Để thay đổi prefix, sử dụng: `{prefix}prefix <prefix mới>`",
+		"examples": "Ví dụ",
+		"examples_list": "`{prefix}prefix ?`\n`{prefix}prefix /`\n`{prefix}prefix bot.`",
+		"no_permission": "Không có quyền",
+		"no_permission_desc": "Bạn cần có quyền **Quản lý Server** để thay đổi prefix!",
+		"invalid_length": "Prefix không hợp lệ",
+		"invalid_length_desc": "Prefix không được dài quá 10 ký tự!",
+		"invalid_chars": "Prefix không hợp lệ",
+		"invalid_chars_desc": "Prefix không được chứa khoảng trắng hoặc ký tự xuống dòng!",
+		"updated": "Prefix đã được cập nhật",
+		"updated_desc": "Prefix của server đã được thay đổi từ `{oldPrefix}` thành `{newPrefix}`\n\nTừ bây giờ bạn có thể sử dụng lệnh với prefix mới: `{newPrefix}ping`",
+		"note": "Lưu ý",
+		"note_desc": "Prefix mới sẽ có hiệu lực ngay lập tức cho tất cả người dùng trong server này.",
+		"error": "Lỗi",
+		"error_desc": "Đã xảy ra lỗi khi xử lý lệnh. Vui lòng thử lại sau!"
+	},
+	"help": {
+		"no_commands": "Không tìm thấy lệnh nào. Vui lòng kiểm tra cấu trúc thư mục lệnh.",
+		"select_category": "Chọn danh mục lệnh",
+		"category_description": "Xem các lệnh trong danh mục {category}",
+		"title": "🤖 Danh Sách Lệnh",
+		"description": "Chọn một danh mục để xem các lệnh chi tiết.",
+		"total_categories": "📊 Tổng Số Danh Mục",
+		"total_commands": "📋 Tổng Số Lệnh",
+		"categories_count": "{count} danh mục",
+		"commands_count": "{count} lệnh",
+		"footer": "Bot được phát triển bởi sang0023"
+	},
+	"events": {
+		"slash_response": {
+			"log_message": "events.slash_response.log_message"
+		},
+		"command_response": {
+			"error_process": "events.command_response.error_process",
+			"log_message": "events.command_response.log_message"
+		}
+	},
+	"ticket": {
+		"setup": {
+			"only_owner_dev": "❌ Chỉ Owner server hoặc Developer mới có thể sử dụng lệnh này!",
+			"success": "✅ Đã thiết lập hệ thống ticket thành công!",
+			"success_detail": "📍 Channel: {channel}\n📁 Category 1: {category1}\n📁 Category 2: {category2}\n👥 Staff Role: {staffRole}",
+			"dm_role": "🔑 DM Role: {dmRole}",
+			"error": "❌ Đã xảy ra lỗi khi thiết lập hệ thống ticket!",
+			"embed_title": "🎫 Hệ Thống Ticket",
+			"embed_description": "**Chào mừng bạn đến với hệ thống hỗ trợ!**\n\nVui lòng chọn loại ticket phù hợp với nhu cầu của bạn:\n\n📦 **Mua Hàng** - Tạo ticket để mua sản phẩm\n❓ **Hỗ Trợ** - Tạo ticket để được hỗ trợ\n\n*Lưu ý: Mỗi loại ticket bạn chỉ được tạo 1 ticket duy nhất.*",
+			"button_buy": "📦 Mua Hàng",
+			"button_support": "❓ Hỗ Trợ"
+		},
+		"create": {
+			"not_setup": "❌ Hệ thống ticket chưa được thiết lập!",
+			"already_have": "❌ Bạn đã có một ticket {type} đang mở! {channel}",
+			"type_buy": "Mua Hàng",
+			"type_support": "Hỗ Trợ",
+			"no_category": "❌ Không tìm thấy category để tạo ticket!",
+			"success": "✅ Đã tạo ticket thành công! {channel}",
+			"error": "❌ Đã xảy ra lỗi khi tạo ticket!",
+			"welcome_title": "🎫 Ticket {type}",
+			"welcome_description": "Xin chào {user}!\n\nCảm ơn bạn đã tạo ticket. Staff sẽ hỗ trợ bạn sớm nhất có thể.\n\n**Loại ticket:** {typeEmoji} {type}\n**Ticket ID:** #{ticketNumber}"
+		},
+		"claim": {
+			"not_setup": "❌ Hệ thống ticket chưa được thiết lập!",
+			"not_staff": "❌ Bạn không có quyền claim ticket!",
+			"not_ticket": "❌ Đây không phải là kênh ticket!",
+			"already_claimed": "❌ Ticket này đã được claim bởi {staff}!",
+			"success": "✅ Bạn đã claim ticket này thành công!",
+			"error": "❌ Đã xảy ra lỗi khi claim ticket!",
+			"embed_title": "✅ Ticket Đã Được Claim",
+			"embed_description": "Staff {staff} đã nhận hỗ trợ ticket này."
+		},
+		"close": {
+			"not_ticket": "❌ Đây không phải là kênh ticket!",
+			"no_config": "❌ Không tìm thấy cấu hình ticket!",
+			"denied_title": "❌ Action Denied",
+			"denied_description": "Xin lỗi, Bạn vui lòng Legit trước khi xóa ticket nha <a:abcaBowDown:1234567890>\n\nSau khi xong vui lòng tag tên Staff để staff có thể xóa ticket của bạn đi nheng.",
+			"deleting": "🗑️ Đang xóa ticket...",
+			"error": "❌ Đã xảy ra lỗi khi đóng ticket!",
+			"embed_title": "🔒 Đóng Ticket",
+			"embed_description": "Bạn có muốn đóng ticket này không?\n\n**Lưu ý:** Nếu ticket đã được claim, chỉ Staff mới có thể xóa ticket.",
+			"button_close": "🗑️ Đóng Ticket"
+		},
+		"dm": {
+			"not_setup": "❌ Hệ thống ticket chưa được thiết lập!",
+			"no_permission": "❌ Bạn không có quyền sử dụng lệnh này!",
+			"not_ticket": "❌ Đây không phải là kênh ticket!",
+			"no_user": "❌ Vui lòng mention user! Cú pháp: `+dm @user <lý do>`",
+			"no_reason": "❌ Vui lòng nhập lý do! Cú pháp: `+dm @user <lý do>`",
+			"error": "❌ Đã xảy ra lỗi!",
+			"ticket_embed_title": "✅ Đơn Hàng Hoàn Thành",
+			"ticket_embed_description": "Đơn hàng của {user} đã được hoàn thành!\n\n**Đơn Hàng:** {reason}\n**Xử lý bởi:** {staff}",
+			"button_delete": "🗑️ Xóa Ticket",
+			"dm_embed_title": "📦 Thông Báo Từ J & D Store",
+			"dm_embed_description": "Chủ sốp **{staff}** đã gửi cho bạn 1 tin nhắn!\n\n**Đơn hàng của bạn đã được hoàn thành**\n\n**Đơn Hàng:** {reason}\n\nXin hãy gửi cho chúng tui 1 legit ở <#1384052073439690813>\n\nCảm ơn bạn đã mua hàng ở **J & D Store**\n\nTicket của bạn: {channel}",
+			"dm_success": "✅ Đã gửi thông báo DM cho {user}!",
+			"dm_failed": "⚠️ Không thể gửi DM cho {user}. User có thể đã tắt DM."
+		}
+	}
+}
