@@ -1,52 +1,137 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  * {
-    @apply box-border;
+/* Custom theme using CSS variables for Tailwind v4 */
+@theme {
+  /* Discord colors */
+  --color-discord-blurple: #5865f2;
+  --color-discord-blurple-hover: #4752c4;
+  --color-discord-green: #23a55a;
+  --color-discord-red: #ed4245;
+  --color-discord-yellow: #fee75c;
+  --color-discord-link: #00aff4;
+  
+  /* Dark theme colors */
+  --color-dark-primary: #313338;
+  --color-dark-secondary: #2b2d31;
+  --color-dark-tertiary: #1e1f22;
+  --color-dark-hover: #35373c;
+  --color-dark-active: #404249;
+  
+  /* Text colors */
+  --color-text-normal: #dbdee1;
+  --color-text-muted: #949ba4;
+  --color-text-header: #f2f3f5;
+  --color-text-header-secondary: #b5bac1;
+  
+  /* Fonts */
+  --font-sans: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: Consolas, Monaco, 'Andale Mono', monospace;
+  
+  /* Animations */
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-slide-down: slide-down 0.3s ease-out;
+  
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
   }
   
-  body {
-    @apply bg-dark-tertiary text-text-normal font-sans antialiased;
-  }
-
-  ::-webkit-scrollbar {
-    @apply w-2 h-2;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-dark-tertiary rounded;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-dark-primary;
+  @keyframes slide-down {
+    0% { opacity: 0; transform: translateY(-10px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
 }
 
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded transition-all duration-200 relative overflow-hidden;
-  }
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
 
-  .btn-primary {
-    @apply bg-discord-blurple text-white shadow-lg shadow-discord-blurple/30 hover:bg-discord-blurple-hover hover:shadow-discord-blurple/40;
-  }
+body {
+  background-color: var(--color-dark-tertiary);
+  color: var(--color-text-normal);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-  .btn-secondary {
-    @apply bg-dark-active text-text-normal hover:bg-dark-hover;
-  }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
 
-  .form-input {
-    @apply w-full px-3 py-2.5 bg-dark-tertiary border border-transparent rounded text-text-normal text-sm transition-all duration-200;
-    @apply hover:border-dark-hover focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple focus:outline-none;
-  }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-  .form-textarea {
-    @apply form-input resize-y min-h-[80px] font-sans leading-relaxed;
-  }
+::-webkit-scrollbar-thumb {
+  background: var(--color-dark-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-dark-primary);
+}
+
+/* Component classes */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background-color: var(--color-discord-blurple);
+  color: white;
+  box-shadow: 0 10px 15px -3px rgb(88 101 242 / 0.3);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-discord-blurple-hover);
+  box-shadow: 0 10px 15px -3px rgb(88 101 242 / 0.4);
+}
+
+.btn-secondary {
+  background-color: var(--color-dark-active);
+  color: var(--color-text-normal);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-dark-hover);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  background-color: var(--color-dark-tertiary);
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  color: var(--color-text-normal);
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.form-input:hover {
+  border-color: var(--color-dark-hover);
+}
+
+.form-input:focus {
+  border-color: var(--color-discord-blurple);
+  box-shadow: 0 0 0 1px var(--color-discord-blurple);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: var(--font-sans);
+  line-height: 1.625;
 }

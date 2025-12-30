@@ -1,6 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+} = require('discord.js');
 const { prisma, getGuildLanguage } = require('../../../utils/prisma');
 const { GT } = require('../../../utils/guildI18n');
+const EmbedComponentsV2 = require('../../../utils/embedComponentsV2');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,7 +19,7 @@ module.exports = {
     let locale = await getGuildLanguage(guild.id);
     if (!locale) locale = 'Vietnamese';
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // Lấy config ticket
@@ -72,14 +77,31 @@ module.exports = {
       // Cập nhật topic channel
       await channel.setTopic(`Ticket opened by "${ownerName}" | claimed by ${user.username}`);
 
-      // Gửi embed thông báo
-      const claimEmbed = new EmbedBuilder()
-        .setTitle(await GT(guild.id, locale, 'ticket.claim.embed_title'))
-        .setDescription(await GT(guild.id, locale, 'ticket.claim.embed_description', { staff: `${user}` }))
-        .setColor('#00FF00')
-        .setTimestamp();
+      // Gửi container thông báo
+      const claimImage = await GT(guild.id, locale, 'ticket.claim.embed_image');
+      
+      const claimContainer = EmbedComponentsV2.createContainer();
+      claimContainer.addTextDisplay(
+        `## ${await GT(guild.id, locale, 'ticket.claim.embed_title')}`
+      );
+      claimContainer.addSeparator({ divider: true });
+      claimContainer.addTextDisplay(
+        await GT(guild.id, locale, 'ticket.claim.embed_description', { staff: `${user}` })
+      );
 
-      await channel.send({ embeds: [claimEmbed] });
+      // Thêm MediaGallery nếu có image
+      if (claimImage && claimImage !== 'ticket.claim.embed_image') {
+        const gallery = new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL(claimImage)
+        );
+        claimContainer.addMediaGallery(gallery);
+      }
+
+      claimContainer.addTextDisplay(
+        `-# <t:${Math.floor(Date.now() / 1000)}:f>`
+      );
+
+      await channel.send(claimContainer.build());
 
       await interaction.editReply({
         content: await GT(guild.id, locale, 'ticket.claim.success'),

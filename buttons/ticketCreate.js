@@ -1,11 +1,12 @@
 const {
-  EmbedBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
   PermissionFlagsBits,
   ChannelType,
 } = require('discord.js');
-const { MessageFlags } = require('discord-api-types/v10');
 const { prisma, getGuildLanguage } = require('../utils/prisma');
-const { GT, getEmbedOverride } = require('../utils/guildI18n');
+const { GT } = require('../utils/guildI18n');
+const EmbedComponentsV2 = require('../utils/embedComponentsV2');
 
 module.exports = {
   customId: 'ticket_create_*',
@@ -18,7 +19,7 @@ module.exports = {
     let locale = await getGuildLanguage(guild.id);
     if (!locale) locale = 'Vietnamese';
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // Lấy config ticket
@@ -123,23 +124,45 @@ module.exports = {
         },
       });
 
-      // Tạo embed chào mừng trong ticket
+      // Tạo container chào mừng trong ticket với EmbedComponentsV2
       const typeEmoji = buttonType === 'buy' ? '📦' : '❓';
-      const welcomeEmbed = new EmbedBuilder()
-        .setTitle(await GT(guild.id, locale, 'ticket.create.welcome_title', { type: typeName }))
-        .setDescription(await GT(guild.id, locale, 'ticket.create.welcome_description', {
+      const accentColor = buttonType === 'buy' ? 0x5865F2 : 0xFFA500;
+      const welcomeImage = await GT(guild.id, locale, 'ticket.create.welcome_image');
+      
+      const welcomeContainer = EmbedComponentsV2.createContainer();
+      
+      // Title
+      welcomeContainer.addTextDisplay(
+        `## ${await GT(guild.id, locale, 'ticket.create.welcome_title', { type: typeName })}`
+      );
+      welcomeContainer.addSeparator({ divider: true });
+      
+      // Description
+      welcomeContainer.addTextDisplay(
+        await GT(guild.id, locale, 'ticket.create.welcome_description', {
           user: `${user}`,
           typeEmoji: typeEmoji,
           type: typeName,
           ticketNumber: ticketNumber,
-        }))
-        .setColor(buttonType === 'buy' ? '#5865F2' : '#FFA500')
-        .setFooter({ text: 'J & D Store - Ticket System' })
-        .setTimestamp();
+        })
+      );
+
+      // Thêm MediaGallery nếu có image
+      if (welcomeImage && welcomeImage !== 'ticket.create.welcome_image') {
+        const gallery = new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL(welcomeImage)
+        );
+        welcomeContainer.addMediaGallery(gallery);
+      }
+
+      welcomeContainer.addSeparator({ divider: true });
+      welcomeContainer.addTextDisplay(
+        `-# J & D Store - Ticket System • <t:${Math.floor(Date.now() / 1000)}:f>`
+      );
 
       await ticketChannel.send({
         content: `${user} | <@&${config.staffRoleId}>`,
-        embeds: [welcomeEmbed],
+        ...welcomeContainer.build(),
       });
 
       await interaction.editReply({

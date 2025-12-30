@@ -195,8 +195,11 @@
 			"error": "❌ Đã xảy ra lỗi khi thiết lập hệ thống ticket!",
 			"embed_title": "🎫 Hệ Thống Ticket",
 			"embed_description": "**Chào mừng bạn đến với hệ thống hỗ trợ!**\n\nVui lòng chọn loại ticket phù hợp với nhu cầu của bạn:\n\n📦 **Mua Hàng** - Tạo ticket để mua sản phẩm\n❓ **Hỗ Trợ** - Tạo ticket để được hỗ trợ\n\n*Lưu ý: Mỗi loại ticket bạn chỉ được tạo 1 ticket duy nhất.*",
-			"button_buy": "📦 Mua Hàng",
-			"button_support": "❓ Hỗ Trợ"
+			"embed_image": "https://i.imgur.com/your-ticket-banner.png",
+			"button_buy": "Mua Hàng",
+			"button_buy_emoji": "📦",
+			"button_support": "Hỗ Trợ",
+			"button_support_emoji": "❓"
 		},
 		"create": {
 			"not_setup": "❌ Hệ thống ticket chưa được thiết lập!",
@@ -207,7 +210,8 @@
 			"success": "✅ Đã tạo ticket thành công! {channel}",
 			"error": "❌ Đã xảy ra lỗi khi tạo ticket!",
 			"welcome_title": "🎫 Ticket {type}",
-			"welcome_description": "Xin chào {user}!\n\nCảm ơn bạn đã tạo ticket. Staff sẽ hỗ trợ bạn sớm nhất có thể.\n\n**Loại ticket:** {typeEmoji} {type}\n**Ticket ID:** #{ticketNumber}"
+			"welcome_description": "Xin chào {user}!\n\nCảm ơn bạn đã tạo ticket. Staff sẽ hỗ trợ bạn sớm nhất có thể.\n\n**Loại ticket:** {typeEmoji} {type}\n**Ticket ID:** #{ticketNumber}",
+			"welcome_image": "https://i.imgur.com/your-welcome-banner.png"
 		},
 		"claim": {
 			"not_setup": "❌ Hệ thống ticket chưa được thiết lập!",
@@ -217,13 +221,15 @@
 			"success": "✅ Bạn đã claim ticket này thành công!",
 			"error": "❌ Đã xảy ra lỗi khi claim ticket!",
 			"embed_title": "✅ Ticket Đã Được Claim",
-			"embed_description": "Staff {staff} đã nhận hỗ trợ ticket này."
+			"embed_description": "Staff {staff} đã nhận hỗ trợ ticket này.",
+			"embed_image": "https://i.imgur.com/your-claim-banner.png"
 		},
 		"close": {
 			"not_ticket": "❌ Đây không phải là kênh ticket!",
 			"no_config": "❌ Không tìm thấy cấu hình ticket!",
 			"denied_title": "❌ Action Denied",
 			"denied_description": "Xin lỗi, Bạn vui lòng Legit trước khi xóa ticket nha <a:abcaBowDown:1234567890>\n\nSau khi xong vui lòng tag tên Staff để staff có thể xóa ticket của bạn đi nheng.",
+			"denied_image": "https://i.imgur.com/your-denied-banner.png",
 			"deleting": "🗑️ Đang xóa ticket...",
 			"error": "❌ Đã xảy ra lỗi khi đóng ticket!",
 			"embed_title": "🔒 Đóng Ticket",

@@ -84,7 +84,14 @@
     "title": "🛠️ Help Menu",
     "description": "Hello! I'm {displayName}, a bot created by {owner}.\nYou can use `{prefix} help <command>` to get more information about a command.",
     "footer": "Use {prefix} help <command> for more information about a command",
-    "detail": "**Description:** {content}\n**Usage:** `{usage}`\n**Examples:** {examples}\n**Aliases:** {aliases}\n**Cooldown:** {cooldown}"
+    "detail": "**Description:** {content}\n**Usage:** `{usage}`\n**Examples:** {examples}\n**Aliases:** {aliases}\n**Cooldown:** {cooldown}",
+    "no_commands": "No commands found. Please check the command folder structure.",
+    "select_category": "Select command category",
+    "category_description": "View commands in {category} category",
+    "total_categories": "📊 Total Categories",
+    "total_commands": "📋 Total Commands",
+    "categories_count": "{count} categories",
+    "commands_count": "{count} commands"
   },
   "ping": {
     "checking": "Checking latency...",
@@ -182,18 +189,6 @@
     "error": "Error",
     "error_desc": "An error occurred while processing the command. Please try again later!"
   },
-  "help": {
-    "no_commands": "No commands found. Please check the command folder structure.",
-    "select_category": "Select command category",
-    "category_description": "View commands in {category} category",
-    "title": "🤖 Command List",
-    "description": "Select a category to view detailed commands.",
-    "total_categories": "📊 Total Categories",
-    "total_commands": "📋 Total Commands",
-    "categories_count": "{count} categories",
-    "commands_count": "{count} commands",
-    "footer": "Bot developed by sang0023"
-  },
   "ticket": {
     "setup": {
       "only_owner_dev": "❌ Only server Owner or Developer can use this command!",
@@ -203,8 +198,11 @@
       "error": "❌ An error occurred while setting up the ticket system!",
       "embed_title": "🎫 Ticket System",
       "embed_description": "**Welcome to the support system!**\n\nPlease select the ticket type that suits your needs:\n\n📦 **Purchase** - Create a ticket to buy products\n❓ **Support** - Create a ticket for support\n\n*Note: You can only create 1 ticket per type.*",
-      "button_buy": "📦 Purchase",
-      "button_support": "❓ Support"
+      "embed_image": "https://i.imgur.com/your-ticket-banner.png",
+      "button_buy": "Purchase",
+      "button_buy_emoji": "📦",
+      "button_support": "Support",
+      "button_support_emoji": "❓"
     },
     "create": {
       "not_setup": "❌ Ticket system has not been set up!",
@@ -215,7 +213,8 @@
       "success": "✅ Ticket created successfully! {channel}",
       "error": "❌ An error occurred while creating the ticket!",
       "welcome_title": "🎫 {type} Ticket",
-      "welcome_description": "Hello {user}!\n\nThank you for creating a ticket. Staff will assist you as soon as possible.\n\n**Ticket type:** {typeEmoji} {type}\n**Ticket ID:** #{ticketNumber}"
+      "welcome_description": "Hello {user}!\n\nThank you for creating a ticket. Staff will assist you as soon as possible.\n\n**Ticket type:** {typeEmoji} {type}\n**Ticket ID:** #{ticketNumber}",
+      "welcome_image": "https://i.imgur.com/your-welcome-banner.png"
     },
     "claim": {
       "not_setup": "❌ Ticket system has not been set up!",
@@ -225,13 +224,15 @@
       "success": "✅ You have successfully claimed this ticket!",
       "error": "❌ An error occurred while claiming the ticket!",
       "embed_title": "✅ Ticket Claimed",
-      "embed_description": "Staff {staff} has taken over this ticket."
+      "embed_description": "Staff {staff} has taken over this ticket.",
+      "embed_image": "https://i.imgur.com/your-claim-banner.png"
     },
     "close": {
       "not_ticket": "❌ This is not a ticket channel!",
       "no_config": "❌ Ticket configuration not found!",
       "denied_title": "❌ Action Denied",
       "denied_description": "Sorry, please leave a review before closing the ticket.\n\nAfter that, please tag a Staff member so they can close your ticket.",
+      "denied_image": "https://i.imgur.com/your-denied-banner.png",
       "deleting": "🗑️ Deleting ticket...",
       "error": "❌ An error occurred while closing the ticket!",
       "embed_title": "🔒 Close Ticket",

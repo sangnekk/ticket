@@ -1,232 +1,165 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import EmbedList from './components/EmbedList'
-import EmbedEditor from './components/EmbedEditor'
-import EmbedPreview from './components/EmbedPreview'
-import { PaletteIcon, HomeIcon, EditIcon, DownloadIcon, RefreshIcon, SaveIcon, EyeIcon, ListIcon, LoadingIcon } from './components/Icons'
+import ComponentsV2Editor from './components/ComponentsV2Editor'
+import ComponentsV2Preview from './components/ComponentsV2Preview'
+import { PaletteIcon, HomeIcon, EditIcon, DownloadIcon, RefreshIcon, SaveIcon, EyeIcon, ListIcon, LoadingIcon, ComponentsIcon } from './components/Icons'
 import './index.css'
 
-const EMBED_TEMPLATES = [
-  {
-    id: 'ticket.setup',
-    name: 'Ticket Setup',
-    description: 'Embed hiển thị khi setup ticket',
-    keys: { title: 'ticket.setup.embed_title', description: 'ticket.setup.embed_description' },
-    defaultEmbed: {
-      title: '🎫 Hệ Thống Ticket',
-      description: '**Chào mừng bạn đến với hệ thống hỗ trợ!**\n\nVui lòng chọn loại ticket phù hợp với nhu cầu của bạn:\n\n📦 **Mua Hàng** - Tạo ticket để mua sản phẩm\n❓ **Hỗ Trợ** - Tạo ticket để được hỗ trợ\n\n*Lưu ý: Mỗi loại ticket bạn chỉ được tạo 1 ticket duy nhất.*',
-      color: '#5865F2',
-      footer: { text: 'J & D Store - Ticket System' }
-    }
-  },
-  {
-    id: 'ticket.create.welcome',
-    name: 'Ticket Welcome',
-    description: 'Embed chào mừng khi tạo ticket',
-    keys: { title: 'ticket.create.welcome_title', description: 'ticket.create.welcome_description' },
-    defaultEmbed: {
-      title: '🎫 Ticket {type}',
-      description: 'Xin chào {user}!\n\nCảm ơn bạn đã tạo ticket. Staff sẽ hỗ trợ bạn sớm nhất có thể.\n\n**Loại ticket:** {typeEmoji} {type}\n**Ticket ID:** #{ticketNumber}',
-      color: '#5865F2',
-      footer: { text: 'J & D Store - Ticket System' }
-    }
-  },
-  {
-    id: 'ticket.claim',
-    name: 'Ticket Claimed',
-    description: 'Embed khi staff claim ticket',
-    keys: { title: 'ticket.claim.embed_title', description: 'ticket.claim.embed_description' },
-    defaultEmbed: {
-      title: '✅ Ticket Đã Được Claim',
-      description: 'Staff {staff} đã nhận hỗ trợ ticket này.',
-      color: '#00FF00'
-    }
-  },
-  {
-    id: 'ticket.close',
-    name: 'Ticket Close',
-    description: 'Embed xác nhận đóng ticket',
-    keys: { title: 'ticket.close.embed_title', description: 'ticket.close.embed_description' },
-    defaultEmbed: {
-      title: '🔒 Đóng Ticket',
-      description: 'Bạn có muốn đóng ticket này không?\n\n**Lưu ý:** Nếu ticket đã được claim, chỉ Staff mới có thể xóa ticket.',
-      color: '#FF6B6B',
-      footer: { text: 'J & D Store - Ticket System' }
-    }
-  },
-  {
-    id: 'ticket.close.denied',
-    name: 'Ticket Close Denied',
-    description: 'Embed từ chối đóng ticket',
-    keys: { title: 'ticket.close.denied_title', description: 'ticket.close.denied_description' },
-    defaultEmbed: {
-      title: '❌ Action Denied',
-      description: 'Xin lỗi, Bạn vui lòng Legit trước khi xóa ticket nha\n\nSau khi xong vui lòng tag tên Staff để staff có thể xóa ticket của bạn đi nheng.',
-      color: '#FF0000'
-    }
-  },
-  {
-    id: 'ticket.dm.ticket',
-    name: 'DM - Ticket Embed',
-    description: 'Embed gửi vào ticket khi hoàn thành',
-    keys: { title: 'ticket.dm.ticket_embed_title', description: 'ticket.dm.ticket_embed_description' },
-    defaultEmbed: {
-      title: '✅ Đơn Hàng Hoàn Thành',
-      description: 'Đơn hàng của {user} đã được hoàn thành!\n\n**Đơn Hàng:** {reason}\n**Xử lý bởi:** {staff}',
-      color: '#00FF00',
-      footer: { text: 'J & D Store' }
-    }
-  },
-  {
-    id: 'ticket.dm.user',
-    name: 'DM - User Embed',
-    description: 'Embed gửi DM cho user',
-    keys: { title: 'ticket.dm.dm_embed_title', description: 'ticket.dm.dm_embed_description' },
-    defaultEmbed: {
-      title: '📦 Thông Báo Từ J & D Store',
-      description: 'Chủ sốp **{staff}** đã gửi cho bạn 1 tin nhắn!\n\n**Đơn hàng của bạn đã được hoàn thành**\n\n**Đơn Hàng:** {reason}\n\nXin hãy gửi cho chúng tui 1 legit ở <#1384052073439690813>\n\nCảm ơn bạn đã mua hàng ở **J & D Store**\n\nTicket của bạn: {channel}',
-      color: '#5865F2',
-      footer: { text: 'J & D Store - Cảm ơn bạn!' }
-    }
-  }
-]
-
-const DEFAULT_EMBED = {
+const DEFAULT_CONTAINER = {
   title: '',
   description: '',
-  color: '#5865F2',
-  author: { name: '', icon_url: '', url: '' },
-  thumbnail: { url: '' },
-  image: { url: '' },
-  footer: { text: '', icon_url: '' },
-  fields: [],
-  timestamp: false
+  accentColor: '#5865F2',
+  image: '',
+  buttons: [],
+  footer: ''
 }
 
 function App() {
+  const [templates, setTemplates] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
-  const [embed, setEmbed] = useState({ ...DEFAULT_EMBED })
+  const [container, setContainer] = useState({ ...DEFAULT_CONTAINER })
   const [guildId, setGuildId] = useState('')
+  const [locale, setLocale] = useState('Vietnamese')
+  const [locales, setLocales] = useState([])
   const [saveStatus, setSaveStatus] = useState({ type: '', message: '' })
   const [isLoading, setIsLoading] = useState(false)
-  const [loadedData, setLoadedData] = useState({}) // Cache loaded data per template
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true)
   const prevGuildIdRef = useRef('')
 
-  // Load data for a specific template
+  // Fetch available locales on mount
+  useEffect(() => {
+    fetch('/api/locales')
+      .then(res => res.json())
+      .then(data => setLocales(data))
+      .catch(err => console.error('Error fetching locales:', err))
+  }, [])
+
+  // Fetch templates from API when locale changes
+  useEffect(() => {
+    setIsLoadingTemplates(true)
+    fetch(`/api/componentsv2/templates?locale=${locale}`)
+      .then(res => res.json())
+      .then(data => {
+        setTemplates(data)
+        setIsLoadingTemplates(false)
+      })
+      .catch(err => {
+        console.error('Error fetching templates:', err)
+        setIsLoadingTemplates(false)
+      })
+  }, [locale])
+
+  // Load template data with guild overrides
   const loadTemplateData = useCallback(async (template, gId) => {
-    if (!gId || !template) return null
+    if (!template) return null
     
     try {
-      const keys = template.keys
-      const data = {}
+      const url = gId 
+        ? `/api/componentsv2/template/${template.id}?guildId=${gId}&locale=${locale}`
+        : `/api/componentsv2/template/${template.id}?locale=${locale}`
       
-      if (keys.title) {
-        const res = await fetch('/api/text-override?guildId=' + gId + '&key=' + keys.title)
-        const json = await res.json()
-        if (json.text) data.title = json.text
-      }
+      const res = await fetch(url)
+      const data = await res.json()
       
-      if (keys.description) {
-        const res = await fetch('/api/text-override?guildId=' + gId + '&key=' + keys.description)
-        const json = await res.json()
-        if (json.text) data.description = json.text
-      }
-      
-      return Object.keys(data).length > 0 ? data : null
+      return data
     } catch (error) {
       console.error('Error loading template data:', error)
       return null
     }
-  }, [])
+  }, [locale])
 
-  // Load all templates data when Guild ID changes (paste/input)
-  const loadAllTemplatesData = useCallback(async (gId) => {
-    if (!gId || gId.length < 17) return // Discord Guild ID is 17-19 digits
-    
-    setIsLoading(true)
-    setSaveStatus({ type: 'info', message: 'Đang tải dữ liệu...' })
-    
-    const newLoadedData = {}
-    let hasAnyData = false
-    
-    for (const template of EMBED_TEMPLATES) {
-      const data = await loadTemplateData(template, gId)
-      if (data) {
-        newLoadedData[template.id] = data
-        hasAnyData = true
-      }
+  // Build container from template data
+  const buildContainerFromData = (template, values) => {
+    const newContainer = {
+      title: values.title || '',
+      description: values.description || '',
+      accentColor: template.accentColor || '#5865F2',
+      image: values.image || '',
+      buttons: [],
+      footer: `-# J & D Store - Ticket System • <t:${Math.floor(Date.now() / 1000)}:f>`
     }
     
-    setLoadedData(newLoadedData)
-    setIsLoading(false)
-    
-    if (hasAnyData) {
-      setSaveStatus({ type: 'success', message: 'Đã tải dữ liệu từ database!' })
-    } else {
-      setSaveStatus({ type: 'warning', message: 'Chưa có dữ liệu custom, sử dụng mặc định' })
+    // Build buttons from template structure and values
+    if (template.buttons && template.buttons.length > 0) {
+      newContainer.buttons = template.buttons.map(btn => {
+        if (btn.id === 'buy') {
+          return {
+            emoji: values.button_buy_emoji || '📦',
+            label: values.button_buy_label || 'Mua Hàng',
+            style: btn.style,
+            customId: btn.customId
+          }
+        } else if (btn.id === 'support') {
+          return {
+            emoji: values.button_support_emoji || '❓',
+            label: values.button_support_label || 'Hỗ Trợ',
+            style: btn.style,
+            customId: btn.customId
+          }
+        }
+        return btn
+      })
     }
     
-    setTimeout(() => setSaveStatus({ type: '', message: '' }), 3000)
-    
-    return newLoadedData
-  }, [loadTemplateData])
-
-  // Auto-load when Guild ID changes significantly (paste detection)
-  useEffect(() => {
-    const prevId = prevGuildIdRef.current
-    const currentId = guildId.trim()
-    
-    // Detect paste: length changed by more than 1 character and new ID is valid length
-    const isPaste = currentId.length >= 17 && Math.abs(currentId.length - prevId.length) > 1
-    
-    if (isPaste) {
-      loadAllTemplatesData(currentId)
-    }
-    
-    prevGuildIdRef.current = currentId
-  }, [guildId, loadAllTemplatesData])
-
-  // Apply loaded data when selecting a template
-  const handleSelectTemplate = (template) => {
-    setSelectedTemplate(template)
-    
-    const cached = loadedData[template.id]
-    
-    setEmbed({
-      ...DEFAULT_EMBED,
-      ...template.defaultEmbed,
-      author: { ...DEFAULT_EMBED.author, ...template.defaultEmbed?.author },
-      thumbnail: { ...DEFAULT_EMBED.thumbnail, ...template.defaultEmbed?.thumbnail },
-      image: { ...DEFAULT_EMBED.image, ...template.defaultEmbed?.image },
-      footer: { ...DEFAULT_EMBED.footer, ...template.defaultEmbed?.footer },
-      fields: template.defaultEmbed?.fields || [],
-      // Override with cached data if available
-      ...(cached || {})
-    })
+    return newContainer
   }
 
-  // Handle Guild ID input change
+  // Handle template selection
+  const handleSelectTemplate = async (template) => {
+    setSelectedTemplate(template)
+    setIsLoading(true)
+    
+    const data = await loadTemplateData(template, guildId)
+    
+    if (data) {
+      const newContainer = buildContainerFromData(template, data.values)
+      setContainer(newContainer)
+      
+      if (data.hasOverrides && guildId) {
+        setSaveStatus({ type: 'success', message: 'Đã tải dữ liệu custom từ database!' })
+        setTimeout(() => setSaveStatus({ type: '', message: '' }), 2000)
+      }
+    } else {
+      // Use default values from template
+      const newContainer = buildContainerFromData(template, template.defaultValues || {})
+      setContainer(newContainer)
+    }
+    
+    setIsLoading(false)
+  }
+
+  // Handle Guild ID change
   const handleGuildIdChange = (e) => {
     setGuildId(e.target.value)
   }
 
-  // Handle paste event specifically
+  // Handle Guild ID paste - auto reload current template
   const handleGuildIdPaste = async (e) => {
-    // Let the paste happen first
     setTimeout(async () => {
       const pastedValue = e.target.value.trim()
-      if (pastedValue.length >= 17) {
-        const newData = await loadAllTemplatesData(pastedValue)
-        // If a template is selected, update it with new data
-        if (selectedTemplate && newData && newData[selectedTemplate.id]) {
-          setEmbed(prev => ({
-            ...prev,
-            ...newData[selectedTemplate.id]
-          }))
+      if (pastedValue.length >= 17 && selectedTemplate) {
+        setIsLoading(true)
+        setSaveStatus({ type: 'info', message: 'Đang tải dữ liệu...' })
+        
+        const data = await loadTemplateData(selectedTemplate, pastedValue)
+        
+        if (data) {
+          const newContainer = buildContainerFromData(selectedTemplate, data.values)
+          setContainer(newContainer)
+          
+          setSaveStatus({ 
+            type: data.hasOverrides ? 'success' : 'warning', 
+            message: data.hasOverrides ? 'Đã tải dữ liệu custom!' : 'Sử dụng giá trị mặc định từ locale' 
+          })
         }
+        
+        setIsLoading(false)
+        setTimeout(() => setSaveStatus({ type: '', message: '' }), 3000)
       }
     }, 0)
   }
 
+  // Save to database
   const handleSave = async () => {
     if (!guildId) {
       setSaveStatus({ type: 'error', message: 'Vui lòng nhập Guild ID!' })
@@ -234,84 +167,130 @@ function App() {
       return
     }
     if (!selectedTemplate) {
-      setSaveStatus({ type: 'error', message: 'Vui lòng chọn một embed!' })
+      setSaveStatus({ type: 'error', message: 'Vui lòng chọn một template!' })
       setTimeout(() => setSaveStatus({ type: '', message: '' }), 3000)
       return
     }
+    
+    setIsLoading(true)
+    
     try {
       const savePromises = []
       const keys = selectedTemplate.keys
-      if (embed.title && keys.title) {
+      
+      // Save title
+      if (container.title && keys.title) {
         savePromises.push(fetch('/api/text-override', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guildId, key: keys.title, text: embed.title })
+          body: JSON.stringify({ guildId, key: keys.title, text: container.title })
         }))
       }
-      if (embed.description && keys.description) {
+      
+      // Save description
+      if (container.description && keys.description) {
         savePromises.push(fetch('/api/text-override', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guildId, key: keys.description, text: embed.description })
+          body: JSON.stringify({ guildId, key: keys.description, text: container.description })
         }))
       }
+      
+      // Save image
+      if (container.image && keys.image) {
+        savePromises.push(fetch('/api/text-override', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ guildId, key: keys.image, text: container.image })
+        }))
+      }
+      
+      // Save button data
+      if (container.buttons[0] && keys.button_buy_label) {
+        savePromises.push(fetch('/api/text-override', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ guildId, key: keys.button_buy_label, text: container.buttons[0].label })
+        }))
+      }
+      if (container.buttons[0] && keys.button_buy_emoji) {
+        savePromises.push(fetch('/api/text-override', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ guildId, key: keys.button_buy_emoji, text: container.buttons[0].emoji })
+        }))
+      }
+      if (container.buttons[1] && keys.button_support_label) {
+        savePromises.push(fetch('/api/text-override', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ guildId, key: keys.button_support_label, text: container.buttons[1].label })
+        }))
+      }
+      if (container.buttons[1] && keys.button_support_emoji) {
+        savePromises.push(fetch('/api/text-override', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ guildId, key: keys.button_support_emoji, text: container.buttons[1].emoji })
+        }))
+      }
+      
       await Promise.all(savePromises)
       setSaveStatus({ type: 'success', message: 'Đã lưu thành công!' })
     } catch (error) {
       setSaveStatus({ type: 'error', message: 'Lỗi kết nối server!' })
     }
+    
+    setIsLoading(false)
     setTimeout(() => setSaveStatus({ type: '', message: '' }), 3000)
   }
 
+  // Load from database
   const handleLoad = async () => {
     if (!guildId || !selectedTemplate) {
-      setSaveStatus({ type: 'error', message: 'Vui lòng nhập Guild ID và chọn embed!' })
+      setSaveStatus({ type: 'error', message: 'Vui lòng nhập Guild ID và chọn template!' })
       setTimeout(() => setSaveStatus({ type: '', message: '' }), 3000)
       return
     }
-    try {
-      const keys = selectedTemplate.keys
-      const loadedEmbed = { ...embed }
-      let hasData = false
-      if (keys.title) {
-        const res = await fetch('/api/text-override?guildId=' + guildId + '&key=' + keys.title)
-        const data = await res.json()
-        if (data.text) {
-          loadedEmbed.title = data.text
-          hasData = true
-        }
-      }
-      if (keys.description) {
-        const res = await fetch('/api/text-override?guildId=' + guildId + '&key=' + keys.description)
-        const data = await res.json()
-        if (data.text) {
-          loadedEmbed.description = data.text
-          hasData = true
-        }
-      }
-      setEmbed(loadedEmbed)
+    
+    setIsLoading(true)
+    setSaveStatus({ type: 'info', message: 'Đang tải...' })
+    
+    const data = await loadTemplateData(selectedTemplate, guildId)
+    
+    if (data) {
+      const newContainer = buildContainerFromData(selectedTemplate, data.values)
+      setContainer(newContainer)
+      
       setSaveStatus({ 
-        type: hasData ? 'success' : 'warning', 
-        message: hasData ? 'Đã tải thành công!' : 'Chưa có dữ liệu, sử dụng mặc định' 
+        type: data.hasOverrides ? 'success' : 'warning', 
+        message: data.hasOverrides ? 'Đã tải dữ liệu custom!' : 'Sử dụng giá trị mặc định' 
       })
-    } catch (error) {
-      setSaveStatus({ type: 'error', message: 'Lỗi kết nối server!' })
+    } else {
+      setSaveStatus({ type: 'error', message: 'Lỗi tải dữ liệu!' })
     }
+    
+    setIsLoading(false)
     setTimeout(() => setSaveStatus({ type: '', message: '' }), 3000)
   }
 
-  const handleReset = () => {
-    if (selectedTemplate) {
-      setEmbed({
-        ...DEFAULT_EMBED,
-        ...selectedTemplate.defaultEmbed,
-        author: { ...DEFAULT_EMBED.author, ...selectedTemplate.defaultEmbed?.author },
-        thumbnail: { ...DEFAULT_EMBED.thumbnail, ...selectedTemplate.defaultEmbed?.thumbnail },
-        image: { ...DEFAULT_EMBED.image, ...selectedTemplate.defaultEmbed?.image },
-        footer: { ...DEFAULT_EMBED.footer, ...selectedTemplate.defaultEmbed?.footer },
-        fields: selectedTemplate.defaultEmbed?.fields || []
-      })
+  // Reset to locale defaults
+  const handleReset = async () => {
+    if (!selectedTemplate) return
+    
+    setIsLoading(true)
+    
+    // Fetch fresh from locale (without guild overrides)
+    const data = await loadTemplateData(selectedTemplate, null)
+    
+    if (data) {
+      const newContainer = buildContainerFromData(selectedTemplate, data.values)
+      setContainer(newContainer)
+      setSaveStatus({ type: 'success', message: 'Đã reset về giá trị mặc định!' })
     }
+    
+    setIsLoading(false)
+    setTimeout(() => setSaveStatus({ type: '', message: '' }), 2000)
   }
 
   return (
@@ -322,17 +301,17 @@ function App() {
         <div className="p-4 bg-gradient-to-b from-discord-blurple/15 to-transparent border-b border-white/5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-discord-blurple rounded-lg flex items-center justify-center shadow-lg">
-              <PaletteIcon className="w-5 h-5 text-white" />
+              <ComponentsIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-text-header">Embed Editor</h1>
+              <h1 className="text-base font-bold text-text-header">Components V2 Editor</h1>
               <p className="text-xs text-text-muted">J & D Store Bot</p>
             </div>
           </div>
         </div>
 
-        {/* Guild Input */}
-        <div className="p-3 border-b border-white/5">
+        {/* Guild Input & Locale Select */}
+        <div className="p-3 border-b border-white/5 space-y-2">
           <div className="relative">
             {isLoading ? (
               <LoadingIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-discord-blurple animate-spin" />
@@ -342,24 +321,40 @@ function App() {
             <input
               type="text"
               className="w-full pl-10 pr-3 py-2.5 bg-dark-tertiary border border-transparent rounded-lg text-text-normal text-sm transition-all hover:border-dark-hover focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple outline-none"
-              placeholder="Paste Guild ID để tải dữ liệu..."
+              placeholder="Paste Guild ID..."
               value={guildId}
               onChange={handleGuildIdChange}
               onPaste={handleGuildIdPaste}
             />
           </div>
+          
+          <select
+            className="w-full px-3 py-2 bg-dark-tertiary border border-transparent rounded-lg text-text-normal text-sm transition-all hover:border-dark-hover focus:border-discord-blurple outline-none"
+            value={locale}
+            onChange={(e) => setLocale(e.target.value)}
+          >
+            {locales.map(loc => (
+              <option key={loc} value={loc}>{loc}</option>
+            ))}
+          </select>
         </div>
 
-        {/* Embed List */}
-        <EmbedList
-          templates={EMBED_TEMPLATES}
-          selectedTemplate={selectedTemplate}
-          onSelect={handleSelectTemplate}
-        />
+        {/* Template List */}
+        {isLoadingTemplates ? (
+          <div className="flex-1 flex items-center justify-center">
+            <LoadingIcon className="w-8 h-8 text-discord-blurple animate-spin" />
+          </div>
+        ) : (
+          <EmbedList
+            templates={templates}
+            selectedTemplate={selectedTemplate}
+            onSelect={handleSelectTemplate}
+          />
+        )}
 
         {/* Footer */}
         <div className="p-3 border-t border-white/5 mt-auto">
-          <p className="text-xs text-text-muted text-center">© 2024 J & D Store</p>
+          <p className="text-xs text-text-muted text-center">© 2024 J & D Store • Components V2</p>
         </div>
       </aside>
 
@@ -379,15 +374,15 @@ function App() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={handleLoad} className="btn btn-secondary">
-                  <DownloadIcon className="w-4 h-4" />
+                <button onClick={handleLoad} className="btn btn-secondary" disabled={isLoading}>
+                  {isLoading ? <LoadingIcon className="w-4 h-4 animate-spin" /> : <DownloadIcon className="w-4 h-4" />}
                   <span>Tải</span>
                 </button>
-                <button onClick={handleReset} className="btn btn-secondary">
+                <button onClick={handleReset} className="btn btn-secondary" disabled={isLoading}>
                   <RefreshIcon className="w-4 h-4" />
                   <span>Reset</span>
                 </button>
-                <button onClick={handleSave} className="btn btn-primary">
+                <button onClick={handleSave} className="btn btn-primary" disabled={isLoading}>
                   <SaveIcon className="w-4 h-4" />
                   <span>Lưu</span>
                 </button>
@@ -407,20 +402,20 @@ function App() {
             )}
 
             {/* Editor Content */}
-            <div className="flex-1 grid grid-cols-2 overflow-hidden">
+            <div className="texx-1 grid grid-cols-2 overflow-hidden">
               {/* Editor Panel */}
               <div className="overflow-y-auto p-4 bg-dark-primary">
-                <EmbedEditor embed={embed} setEmbed={setEmbed} />
+                <ComponentsV2Editor container={container} setContainer={setContainer} />
               </div>
 
               {/* Preview Panel */}
-              <div className="bg-[#36393f] border-l border-dark-tertiary flex flex-col">
+              <div className="bg-[#313338] border-l border-dark-tertiary flex flex-col">
                 <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
                   <EyeIcon className="w-4 h-4 text-text-muted" />
-                  <h3 className="text-xs font-bold text-text-header-secondary uppercase tracking-wide">Preview</h3>
+                  <h3 className="text-xs font-bold text-text-header-secondary uppercase tracking-wide">Preview - Components V2</h3>
                 </div>
                 <div className="flex-1 p-4 overflow-y-auto">
-                  <EmbedPreview embed={embed} />
+                  <ComponentsV2Preview container={container} />
                 </div>
               </div>
             </div>
@@ -428,10 +423,15 @@ function App() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             <div className="w-28 h-28 bg-dark-secondary rounded-2xl flex items-center justify-center mb-6 opacity-60">
-              <ListIcon className="w-12 h-12 text-text-muted" />
+              <ComponentsIcon className="w-12 h-12 text-text-muted" />
             </div>
-            <h2 className="text-2xl font-semibold text-text-header mb-2">Chọn một Embed để chỉnh sửa</h2>
-            <p className="text-base text-text-muted max-w-md">Chọn embed từ danh sách bên trái để bắt đầu tùy chỉnh nội dung</p>
+            <h2 className="text-2xl font-semibold text-text-header mb-2">Chọn một Template để chỉnh sửa</h2>
+            <p className="text-base text-text-muted max-w-md">Chọn template từ danh sách bên trái để bắt đầu tùy chỉnh Components V2</p>
+            <div className="mt-6 p-4 bg-dark-secondary rounded-lg border border-white/5 max-w-md">
+              <p className="text-sm text-text-normal">
+                <span className="text-discord-blurple font-semibold">💡 Tip:</span> Paste Guild ID vào ô input để tự động tải dữ liệu đã lưu
+              </p>
+            </div>
           </div>
         )}
       </main>

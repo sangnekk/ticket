@@ -1,15 +1,13 @@
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
   ButtonStyle,
   ChannelType,
 } = require('discord.js');
 const { prisma } = require('../../../utils/prisma');
 const { getGuildLanguage } = require('../../../utils/prisma');
 const { GT } = require('../../../utils/guildI18n');
+const EmbedComponentsV2 = require('../../../utils/embedComponentsV2');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -50,7 +48,7 @@ module.exports = {
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
-  async execute(interaction, client) {
+  async execute(interaction) {
     const { guild, user } = interaction;
     const config = require('../../../config.json');
 
@@ -65,7 +63,7 @@ module.exports = {
     if (!isOwner && !isDev) {
       return interaction.reply({
         content: await GT(guild.id, locale, 'ticket.setup.only_owner_dev'),
-        ephemeral: true,
+        flags: 64, // Ephemeral
       });
     }
 
@@ -75,7 +73,7 @@ module.exports = {
     const staffRole = interaction.options.getRole('staff');
     const dmRole = interaction.options.getRole('dm_role');
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // Lưu config vào database
@@ -98,27 +96,60 @@ module.exports = {
         },
       });
 
-      // Tạo embed ticket
-      const ticketEmbed = new EmbedBuilder()
-        .setTitle(await GT(guild.id, locale, 'ticket.setup.embed_title'))
-        .setDescription(await GT(guild.id, locale, 'ticket.setup.embed_description'))
-        .setColor('#5865F2')
-        .setFooter({ text: 'J & D Store - Ticket System' })
-        .setTimestamp();
+      // Lấy các label và emoji trước
+      const embedTitle = await GT(guild.id, locale, 'ticket.setup.embed_title');
+      const embedDescription = await GT(guild.id, locale, 'ticket.setup.embed_description');
+      const embedImage = await GT(guild.id, locale, 'ticket.setup.embed_image');
+      const buttonBuyLabel = await GT(guild.id, locale, 'ticket.setup.button_buy');
+      const buttonBuyEmoji = await GT(guild.id, locale, 'ticket.setup.button_buy_emoji');
+      const buttonSupportLabel = await GT(guild.id, locale, 'ticket.setup.button_support');
+      const buttonSupportEmoji = await GT(guild.id, locale, 'ticket.setup.button_support_emoji');
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('ticket_create_buy')
-          .setLabel(await GT(guild.id, locale, 'ticket.setup.button_buy'))
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('ticket_create_support')
-          .setLabel(await GT(guild.id, locale, 'ticket.setup.button_support'))
-          .setStyle(ButtonStyle.Secondary)
-      );
+      // Tạo container ticket với EmbedComponentsV2
+      const container = EmbedComponentsV2.createContainer();
 
-      // Gửi embed vào channel
-      await channel.send({ embeds: [ticketEmbed], components: [row] });
+      // Title
+      container.addTextDisplay(`## ${embedTitle}`);
+      container.addSeparator({ divider: true });
+
+      // Description
+      container.addTextDisplay(embedDescription);
+
+      // Thêm image nếu có (dùng markdown image hoặc MediaGallery nếu discord.js hỗ trợ)
+      if (embedImage && embedImage !== 'ticket.setup.embed_image') {
+        try {
+          // Thử dùng MediaGallery nếu discord.js version hỗ trợ
+          const { MediaGalleryBuilder, MediaGalleryItemBuilder } = require('discord.js');
+          if (MediaGalleryBuilder && MediaGalleryItemBuilder) {
+            const gallery = new MediaGalleryBuilder().addItems(
+              new MediaGalleryItemBuilder().setURL(embedImage)
+            );
+            container.addMediaGallery(gallery);
+          } else {
+            // Fallback: hiển thị link image
+            container.addTextDisplay(`[​](${embedImage})`);
+          }
+        } catch {
+          // Fallback: hiển thị link image
+          container.addTextDisplay(`[​](${embedImage})`);
+        }
+      }
+
+      container.addSeparator({ divider: true });
+
+      // Buttons
+      container.addButton(buttonBuyLabel, 'ticket_create_buy', ButtonStyle.Primary, {
+        emoji: buttonBuyEmoji,
+      });
+      container.addButton(buttonSupportLabel, 'ticket_create_support', ButtonStyle.Secondary, {
+        emoji: buttonSupportEmoji,
+      });
+
+      // Footer
+      container.addTextDisplay(`-# J & D Store - Ticket System • <t:${Math.floor(Date.now() / 1000)}:f>`);
+
+      // Gửi container vào channel
+      await channel.send(container.build());
 
       let successMsg = await GT(guild.id, locale, 'ticket.setup.success') + '\n\n';
       successMsg += await GT(guild.id, locale, 'ticket.setup.success_detail', {

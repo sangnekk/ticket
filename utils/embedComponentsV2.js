@@ -3,16 +3,14 @@ const {
   TextDisplayBuilder,
   SeparatorBuilder,
   SectionBuilder,
-  MediaGalleryBuilder,
-  MediaGalleryItemBuilder,
   FileBuilder,
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
   StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-  AttachmentBuilder,
   MessageFlags,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder
 } = require('discord.js');
 
 const SeparatorSpacingSize = {
@@ -87,10 +85,18 @@ class EmbedComponentsV2 {
   }
 
   static createMediaGallery() {
+    if (!MediaGalleryBuilder) {
+      console.warn('MediaGalleryBuilder không khả dụng trong phiên bản discord.js này');
+      return null;
+    }
     return new MediaGalleryBuilder();
   }
 
   static createMediaGalleryItem(url) {
+    if (!MediaGalleryItemBuilder) {
+      console.warn('MediaGalleryItemBuilder không khả dụng trong phiên bản discord.js này');
+      return null;
+    }
     return new MediaGalleryItemBuilder().setURL(url);
   }
 
@@ -343,12 +349,18 @@ class EmbedComponentsV2 {
       container.addTextDisplay(`## ${title}`);
     }
     
-    const gallery = new MediaGalleryBuilder();
-    images.forEach(imageUrl => {
-      gallery.addItems(new MediaGalleryItemBuilder().setURL(imageUrl));
-    });
-    
-    container.addMediaGallery(gallery);
+    if (MediaGalleryBuilder && MediaGalleryItemBuilder) {
+      const gallery = new MediaGalleryBuilder();
+      images.forEach(imageUrl => {
+        gallery.addItems(new MediaGalleryItemBuilder().setURL(imageUrl));
+      });
+      container.addMediaGallery(gallery);
+    } else {
+      // Fallback: hiển thị images dưới dạng links
+      images.forEach(imageUrl => {
+        container.addTextDisplay(`[​](${imageUrl})`);
+      });
+    }
     
     if (options.caption) {
       container.addTextDisplay(`*${options.caption}*`);

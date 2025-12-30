@@ -1,7 +1,10 @@
-const { EmbedBuilder } = require('discord.js');
-const { MessageFlags } = require('discord-api-types/v10');
+const {
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+} = require('discord.js');
 const { prisma, getGuildLanguage } = require('../utils/prisma');
 const { GT } = require('../utils/guildI18n');
+const EmbedComponentsV2 = require('../utils/embedComponentsV2');
 
 module.exports = {
   customId: 'ticket_close_*',
@@ -13,7 +16,7 @@ module.exports = {
     let locale = await getGuildLanguage(guild.id);
     if (!locale) locale = 'Vietnamese';
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // Lấy ticket info
@@ -45,15 +48,30 @@ module.exports = {
 
       // Nếu ticket đã được claim, user không thể tự xóa
       if (ticket.claimedBy && !isStaff && !isAdmin) {
-        const denyEmbed = new EmbedBuilder()
-          .setTitle(await GT(guild.id, locale, 'ticket.close.denied_title'))
-          .setDescription(await GT(guild.id, locale, 'ticket.close.denied_description'))
-          .setColor('#FF0000')
-          .setTimestamp();
+        const deniedImage = await GT(guild.id, locale, 'ticket.close.denied_image');
+        
+        const denyContainer = EmbedComponentsV2.createContainer();
+        denyContainer.addTextDisplay(
+          `## ${await GT(guild.id, locale, 'ticket.close.denied_title')}`
+        );
+        denyContainer.addSeparator({ divider: true });
+        denyContainer.addTextDisplay(
+          await GT(guild.id, locale, 'ticket.close.denied_description')
+        );
 
-        return interaction.editReply({
-          embeds: [denyEmbed],
-        });
+        // Thêm MediaGallery nếu có image
+        if (deniedImage && deniedImage !== 'ticket.close.denied_image') {
+          const gallery = new MediaGalleryBuilder().addItems(
+            new MediaGalleryItemBuilder().setURL(deniedImage)
+          );
+          denyContainer.addMediaGallery(gallery);
+        }
+
+        denyContainer.addTextDisplay(
+          `-# <t:${Math.floor(Date.now() / 1000)}:f>`
+        );
+
+        return interaction.editReply(denyContainer.build());
       }
 
       // Nếu là staff hoặc admin, xóa ticket
@@ -81,15 +99,30 @@ module.exports = {
         }, 3000);
       } else {
         // User thường không có quyền xóa
-        const denyEmbed = new EmbedBuilder()
-          .setTitle(await GT(guild.id, locale, 'ticket.close.denied_title'))
-          .setDescription(await GT(guild.id, locale, 'ticket.close.denied_description'))
-          .setColor('#FF0000')
-          .setTimestamp();
+        const deniedImage = await GT(guild.id, locale, 'ticket.close.denied_image');
+        
+        const denyContainer = EmbedComponentsV2.createContainer();
+        denyContainer.addTextDisplay(
+          `## ${await GT(guild.id, locale, 'ticket.close.denied_title')}`
+        );
+        denyContainer.addSeparator({ divider: true });
+        denyContainer.addTextDisplay(
+          await GT(guild.id, locale, 'ticket.close.denied_description')
+        );
 
-        return interaction.editReply({
-          embeds: [denyEmbed],
-        });
+        // Thêm MediaGallery nếu có image
+        if (deniedImage && deniedImage !== 'ticket.close.denied_image') {
+          const gallery = new MediaGalleryBuilder().addItems(
+            new MediaGalleryItemBuilder().setURL(deniedImage)
+          );
+          denyContainer.addMediaGallery(gallery);
+        }
+
+        denyContainer.addTextDisplay(
+          `-# <t:${Math.floor(Date.now() / 1000)}:f>`
+        );
+
+        return interaction.editReply(denyContainer.build());
       }
     } catch (error) {
       console.error('Lỗi khi close ticket:', error);
