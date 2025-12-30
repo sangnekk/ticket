@@ -1,12 +1,7 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  PermissionFlagsBits,
-} = require('discord.js');
+const { ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { prisma, getGuildLanguage } = require('../../../utils/prisma');
 const { GT } = require('../../../utils/guildI18n');
+const EmbedComponentsV2 = require('../../../utils/embedComponentsV2');
 
 module.exports = {
   name: 'dm',
@@ -14,7 +9,7 @@ module.exports = {
   usage: '+dm @user <reason>',
   category: 'Ticket',
 
-  async execute(message, args, client) {
+  async execute(message, args) {
     const { guild, channel, author, member } = message;
 
     // Lấy ngôn ngữ
@@ -63,42 +58,45 @@ module.exports = {
       // Xóa lệnh
       await message.delete().catch(() => {});
 
-      // Tạo embed gửi vào ticket
-      const ticketEmbed = new EmbedBuilder()
-        .setTitle(await GT(guild.id, locale, 'ticket.dm.ticket_embed_title'))
-        .setDescription(await GT(guild.id, locale, 'ticket.dm.ticket_embed_description', {
-          user: `${targetUser}`,
-          reason: reason,
-          staff: `${author}`,
-        }))
-        .setColor('#00FF00')
-        .setFooter({ text: 'J & D Store' })
-        .setTimestamp();
-
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId(`ticket_close_${channel.id}`)
-          .setLabel(await GT(guild.id, locale, 'ticket.dm.button_delete'))
-          .setStyle(ButtonStyle.Danger)
+      // Tạo container gửi vào ticket với Components V2
+      const ticketContainer = EmbedComponentsV2.createContainer();
+      
+      ticketContainer.addTextDisplay(`## ${await GT(guild.id, locale, 'ticket.dm.ticket_embed_title')}`);
+      ticketContainer.addSeparator({ divider: true });
+      ticketContainer.addTextDisplay(await GT(guild.id, locale, 'ticket.dm.ticket_embed_description', {
+        user: `${targetUser}`,
+        reason: reason,
+        staff: `${author}`,
+      }));
+      ticketContainer.addSeparator({ divider: true });
+      
+      // Button xóa ticket
+      ticketContainer.addButton(
+        await GT(guild.id, locale, 'ticket.dm.button_delete'),
+        `ticket_close_${channel.id}`,
+        ButtonStyle.Danger,
+        { emoji: '🗑️' }
       );
+      
+      ticketContainer.addTextDisplay(`-# J & D Store • <t:${Math.floor(Date.now() / 1000)}:f>`);
 
-      await channel.send({ embeds: [ticketEmbed], components: [row] });
+      await channel.send(ticketContainer.build());
 
-      // Tạo embed gửi DM cho user
-      const dmEmbed = new EmbedBuilder()
-        .setTitle(await GT(guild.id, locale, 'ticket.dm.dm_embed_title'))
-        .setDescription(await GT(guild.id, locale, 'ticket.dm.dm_embed_description', {
-          staff: author.username,
-          reason: reason,
-          channel: `<#${channel.id}>`,
-        }))
-        .setColor('#5865F2')
-        .setFooter({ text: 'J & D Store - Cảm ơn bạn!' })
-        .setTimestamp();
+      // Tạo container gửi DM cho user với Components V2
+      const dmContainer = EmbedComponentsV2.createContainer();
+      
+      dmContainer.addTextDisplay(`## ${await GT(guild.id, locale, 'ticket.dm.dm_embed_title')}`);
+      dmContainer.addSeparator({ divider: true });
+      dmContainer.addTextDisplay(await GT(guild.id, locale, 'ticket.dm.dm_embed_description', {
+        staff: author.username,
+        reason: reason,
+        channel: `<#${channel.id}>`,
+      }));
+      dmContainer.addTextDisplay(`-# J & D Store - Cảm ơn bạn! • <t:${Math.floor(Date.now() / 1000)}:f>`);
 
       // Gửi DM
       try {
-        await targetUser.send({ embeds: [dmEmbed] });
+        await targetUser.send(dmContainer.build());
         
         // Thông báo đã gửi DM thành công
         const successMsg = await channel.send(await GT(guild.id, locale, 'ticket.dm.dm_success', { user: `${targetUser}` }));

@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import EmbedList from './components/EmbedList'
 import ComponentsV2Editor from './components/ComponentsV2Editor'
 import ComponentsV2Preview from './components/ComponentsV2Preview'
-import { PaletteIcon, HomeIcon, EditIcon, DownloadIcon, RefreshIcon, SaveIcon, EyeIcon, ListIcon, LoadingIcon, ComponentsIcon } from './components/Icons'
+import { HomeIcon, EditIcon, DownloadIcon, RefreshIcon, SaveIcon, EyeIcon, LoadingIcon, ComponentsIcon } from './components/Icons'
 import './index.css'
 
 const DEFAULT_CONTAINER = {
@@ -24,9 +24,7 @@ function App() {
   const [saveStatus, setSaveStatus] = useState({ type: '', message: '' })
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(true)
-  const prevGuildIdRef = useRef('')
 
-  // Fetch available locales on mount
   useEffect(() => {
     fetch('/api/locales')
       .then(res => res.json())
@@ -34,7 +32,6 @@ function App() {
       .catch(err => console.error('Error fetching locales:', err))
   }, [])
 
-  // Fetch templates from API when locale changes
   useEffect(() => {
     setIsLoadingTemplates(true)
     fetch(`/api/componentsv2/templates?locale=${locale}`)
@@ -49,7 +46,6 @@ function App() {
       })
   }, [locale])
 
-  // Load template data with guild overrides
   const loadTemplateData = useCallback(async (template, gId) => {
     if (!template) return null
     
@@ -59,40 +55,50 @@ function App() {
         : `/api/componentsv2/template/${template.id}?locale=${locale}`
       
       const res = await fetch(url)
-      const data = await res.json()
-      
-      return data
+      return await res.json()
     } catch (error) {
       console.error('Error loading template data:', error)
       return null
     }
   }, [locale])
 
-  // Build container from template data
   const buildContainerFromData = (template, values) => {
     const newContainer = {
-      title: values.title || '',
-      description: values.description || '',
+      title: values.embed_title || values.welcome_title || values.denied_title || values.ticket_embed_title || values.dm_embed_title || '',
+      description: values.embed_description || values.welcome_description || values.denied_description || values.ticket_embed_description || values.dm_embed_description || '',
       accentColor: template.accentColor || '#5865F2',
-      image: values.image || '',
+      image: values.embed_image || values.welcome_image || values.denied_image || '',
       buttons: [],
       footer: `-# J & D Store - Ticket System • <t:${Math.floor(Date.now() / 1000)}:f>`
     }
     
-    // Build buttons from template structure and values
     if (template.buttons && template.buttons.length > 0) {
       newContainer.buttons = template.buttons.map(btn => {
         if (btn.id === 'buy') {
           return {
             emoji: values.button_buy_emoji || '📦',
-            label: values.button_buy_label || 'Mua Hàng',
+            label: values.button_buy || 'Mua Hàng',
             style: btn.style,
             customId: btn.customId
           }
         } else if (btn.id === 'support') {
           return {
             emoji: values.button_support_emoji || '❓',
-            label: values.button_support_label || 'Hỗ Trợ',
+            label: values.button_support || 'Hỗ Trợ',
+            style: btn.style,
+            customId: btn.customId
+          }
+        } else if (btn.id === 'close') {
+          return {
+            emoji: '🗑️',
+            label: values.button_close || 'Đóng Ticket',
+            style: btn.style,
+            customId: btn.customId
+          }
+        } else if (btn.id === 'delete') {
+          return {
+            emoji: '🗑️',
+            label: values.button_delete || 'Xóa Ticket',
             style: btn.style,
             customId: btn.customId
           }
@@ -104,7 +110,6 @@ function App() {
     return newContainer
   }
 
-  // Handle template selection
   const handleSelectTemplate = async (template) => {
     setSelectedTemplate(template)
     setIsLoading(true)
@@ -116,11 +121,10 @@ function App() {
       setContainer(newContainer)
       
       if (data.hasOverrides && guildId) {
-        setSaveStatus({ type: 'success', message: 'Đã tải dữ liệu custom từ database!' })
+        setSaveStatus({ type: 'success', message: 'Đã tải dữ liệu custom!' })
         setTimeout(() => setSaveStatus({ type: '', message: '' }), 2000)
       }
     } else {
-      // Use default values from template
       const newContainer = buildContainerFromData(template, template.defaultValues || {})
       setContainer(newContainer)
     }
@@ -128,12 +132,10 @@ function App() {
     setIsLoading(false)
   }
 
-  // Handle Guild ID change
   const handleGuildIdChange = (e) => {
     setGuildId(e.target.value)
   }
 
-  // Handle Guild ID paste - auto reload current template
   const handleGuildIdPaste = async (e) => {
     setTimeout(async () => {
       const pastedValue = e.target.value.trim()
@@ -149,7 +151,7 @@ function App() {
           
           setSaveStatus({ 
             type: data.hasOverrides ? 'success' : 'warning', 
-            message: data.hasOverrides ? 'Đã tải dữ liệu custom!' : 'Sử dụng giá trị mặc định từ locale' 
+            message: data.hasOverrides ? 'Đã tải dữ liệu custom!' : 'Sử dụng giá trị mặc định' 
           })
         }
         
@@ -159,7 +161,6 @@ function App() {
     }, 0)
   }
 
-  // Save to database
   const handleSave = async () => {
     if (!guildId) {
       setSaveStatus({ type: 'error', message: 'Vui lòng nhập Guild ID!' })
@@ -178,61 +179,88 @@ function App() {
       const savePromises = []
       const keys = selectedTemplate.keys
       
+      // Map container fields to locale keys
+      const fieldMappings = {
+        title: ['embed_title', 'welcome_title', 'denied_title', 'ticket_embed_title', 'dm_embed_title'],
+        description: ['embed_description', 'welcome_description', 'denied_description', 'ticket_embed_description', 'dm_embed_description'],
+        image: ['embed_image', 'welcome_image', 'denied_image']
+      }
+      
       // Save title
-      if (container.title && keys.title) {
-        savePromises.push(fetch('/api/text-override', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guildId, key: keys.title, text: container.title })
-        }))
+      if (container.title) {
+        for (const field of fieldMappings.title) {
+          if (keys[field]) {
+            savePromises.push(fetch('/api/text-override', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ guildId, key: keys[field], text: container.title })
+            }))
+            break
+          }
+        }
       }
       
       // Save description
-      if (container.description && keys.description) {
-        savePromises.push(fetch('/api/text-override', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guildId, key: keys.description, text: container.description })
-        }))
+      if (container.description) {
+        for (const field of fieldMappings.description) {
+          if (keys[field]) {
+            savePromises.push(fetch('/api/text-override', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ guildId, key: keys[field], text: container.description })
+            }))
+            break
+          }
+        }
       }
       
       // Save image
-      if (container.image && keys.image) {
-        savePromises.push(fetch('/api/text-override', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guildId, key: keys.image, text: container.image })
-        }))
+      if (container.image) {
+        for (const field of fieldMappings.image) {
+          if (keys[field]) {
+            savePromises.push(fetch('/api/text-override', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ guildId, key: keys[field], text: container.image })
+            }))
+            break
+          }
+        }
       }
       
       // Save button data
-      if (container.buttons[0] && keys.button_buy_label) {
-        savePromises.push(fetch('/api/text-override', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guildId, key: keys.button_buy_label, text: container.buttons[0].label })
-        }))
+      if (container.buttons[0]) {
+        if (keys.button_buy) {
+          savePromises.push(fetch('/api/text-override', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guildId, key: keys.button_buy, text: container.buttons[0].label })
+          }))
+        }
+        if (keys.button_buy_emoji) {
+          savePromises.push(fetch('/api/text-override', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guildId, key: keys.button_buy_emoji, text: container.buttons[0].emoji })
+          }))
+        }
       }
-      if (container.buttons[0] && keys.button_buy_emoji) {
-        savePromises.push(fetch('/api/text-override', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guildId, key: keys.button_buy_emoji, text: container.buttons[0].emoji })
-        }))
-      }
-      if (container.buttons[1] && keys.button_support_label) {
-        savePromises.push(fetch('/api/text-override', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guildId, key: keys.button_support_label, text: container.buttons[1].label })
-        }))
-      }
-      if (container.buttons[1] && keys.button_support_emoji) {
-        savePromises.push(fetch('/api/text-override', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guildId, key: keys.button_support_emoji, text: container.buttons[1].emoji })
-        }))
+      
+      if (container.buttons[1]) {
+        if (keys.button_support) {
+          savePromises.push(fetch('/api/text-override', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guildId, key: keys.button_support, text: container.buttons[1].label })
+          }))
+        }
+        if (keys.button_support_emoji) {
+          savePromises.push(fetch('/api/text-override', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guildId, key: keys.button_support_emoji, text: container.buttons[1].emoji })
+          }))
+        }
       }
       
       await Promise.all(savePromises)
@@ -245,7 +273,6 @@ function App() {
     setTimeout(() => setSaveStatus({ type: '', message: '' }), 3000)
   }
 
-  // Load from database
   const handleLoad = async () => {
     if (!guildId || !selectedTemplate) {
       setSaveStatus({ type: 'error', message: 'Vui lòng nhập Guild ID và chọn template!' })
@@ -274,13 +301,11 @@ function App() {
     setTimeout(() => setSaveStatus({ type: '', message: '' }), 3000)
   }
 
-  // Reset to locale defaults
   const handleReset = async () => {
     if (!selectedTemplate) return
     
     setIsLoading(true)
     
-    // Fetch fresh from locale (without guild overrides)
     const data = await loadTemplateData(selectedTemplate, null)
     
     if (data) {
@@ -294,33 +319,33 @@ function App() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-[300px] bg-dark-secondary border-r border-dark-tertiary flex flex-col flex-shrink-0 h-screen sticky top-0">
+      <aside className="w-[280px] bg-[#2b2d31] border-r border-[#1e1f22] flex flex-col flex-shrink-0">
         {/* Header */}
-        <div className="p-4 bg-gradient-to-b from-discord-blurple/15 to-transparent border-b border-white/5">
+        <div className="p-4 border-b border-[#1e1f22]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-discord-blurple rounded-lg flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#5865f2] to-[#7289da] rounded-xl flex items-center justify-center shadow-lg">
               <ComponentsIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-text-header">Components V2 Editor</h1>
-              <p className="text-xs text-text-muted">J & D Store Bot</p>
+              <h1 className="text-sm font-bold text-[#f2f3f5]">Components V2</h1>
+              <p className="text-xs text-[#949ba4]">J & D Store Bot</p>
             </div>
           </div>
         </div>
 
         {/* Guild Input & Locale Select */}
-        <div className="p-3 border-b border-white/5 space-y-2">
+        <div className="p-3 border-b border-[#1e1f22] space-y-2">
           <div className="relative">
             {isLoading ? (
-              <LoadingIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-discord-blurple animate-spin" />
+              <LoadingIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5865f2] animate-spin" />
             ) : (
-              <HomeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+              <HomeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#949ba4]" />
             )}
             <input
               type="text"
-              className="w-full pl-10 pr-3 py-2.5 bg-dark-tertiary border border-transparent rounded-lg text-text-normal text-sm transition-all hover:border-dark-hover focus:border-discord-blurple focus:ring-1 focus:ring-discord-blurple outline-none"
+              className="w-full pl-10 pr-3 py-2.5 bg-[#1e1f22] border border-transparent rounded-lg text-[#dbdee1] text-sm transition-all hover:border-[#35373c] focus:border-[#5865f2] focus:ring-1 focus:ring-[#5865f2]/50 outline-none placeholder-[#949ba4]"
               placeholder="Paste Guild ID..."
               value={guildId}
               onChange={handleGuildIdChange}
@@ -329,7 +354,7 @@ function App() {
           </div>
           
           <select
-            className="w-full px-3 py-2 bg-dark-tertiary border border-transparent rounded-lg text-text-normal text-sm transition-all hover:border-dark-hover focus:border-discord-blurple outline-none"
+            className="w-full px-3 py-2.5 bg-[#1e1f22] border border-transparent rounded-lg text-[#dbdee1] text-sm transition-all hover:border-[#35373c] focus:border-[#5865f2] outline-none cursor-pointer"
             value={locale}
             onChange={(e) => setLocale(e.target.value)}
           >
@@ -342,7 +367,7 @@ function App() {
         {/* Template List */}
         {isLoadingTemplates ? (
           <div className="flex-1 flex items-center justify-center">
-            <LoadingIcon className="w-8 h-8 text-discord-blurple animate-spin" />
+            <LoadingIcon className="w-8 h-8 text-[#5865f2] animate-spin" />
           </div>
         ) : (
           <EmbedList
@@ -353,24 +378,24 @@ function App() {
         )}
 
         {/* Footer */}
-        <div className="p-3 border-t border-white/5 mt-auto">
-          <p className="text-xs text-text-muted text-center">© 2024 J & D Store • Components V2</p>
+        <div className="p-3 border-t border-[#1e1f22]">
+          <p className="text-xs text-[#949ba4] text-center">© 2024 J & D Store</p>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden bg-[#313338]">
         {selectedTemplate ? (
           <>
             {/* Header */}
-            <header className="flex justify-between items-center px-6 py-4 bg-dark-secondary border-b border-white/5 gap-4">
+            <header className="flex justify-between items-center px-6 py-3 bg-[#2b2d31] border-b border-[#1e1f22]">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-dark-active rounded-lg flex items-center justify-center">
-                  <EditIcon className="w-4 h-4 text-text-normal" />
+                <div className="w-9 h-9 bg-[#1e1f22] rounded-lg flex items-center justify-center">
+                  <EditIcon className="w-4 h-4 text-[#dbdee1]" />
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold text-text-header">{selectedTemplate.name}</h2>
-                  <span className="text-xs text-text-muted">{selectedTemplate.description}</span>
+                  <h2 className="text-sm font-semibold text-[#f2f3f5]">{selectedTemplate.name}</h2>
+                  <span className="text-xs text-[#949ba4]">{selectedTemplate.description}</span>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -391,28 +416,28 @@ function App() {
 
             {/* Status Bar */}
             {saveStatus.message && (
-              <div className={`px-6 py-3 text-sm font-medium flex items-center gap-2 animate-slideDown
-                ${saveStatus.type === 'success' ? 'bg-discord-green/20 text-discord-green border-l-4 border-discord-green' : ''}
-                ${saveStatus.type === 'error' ? 'bg-discord-red/20 text-discord-red border-l-4 border-discord-red' : ''}
-                ${saveStatus.type === 'warning' ? 'bg-discord-yellow/20 text-discord-yellow border-l-4 border-discord-yellow' : ''}
-                ${saveStatus.type === 'info' ? 'bg-discord-blurple/20 text-discord-blurple border-l-4 border-discord-blurple' : ''}`}>
+              <div className={`px-6 py-2.5 text-sm font-medium flex items-center gap-2 animate-slideDown
+                ${saveStatus.type === 'success' ? 'bg-[#23a55a]/15 text-[#23a55a] border-l-4 border-[#23a55a]' : ''}
+                ${saveStatus.type === 'error' ? 'bg-[#ed4245]/15 text-[#ed4245] border-l-4 border-[#ed4245]' : ''}
+                ${saveStatus.type === 'warning' ? 'bg-[#fee75c]/15 text-[#fee75c] border-l-4 border-[#fee75c]' : ''}
+                ${saveStatus.type === 'info' ? 'bg-[#5865f2]/15 text-[#5865f2] border-l-4 border-[#5865f2]' : ''}`}>
                 {saveStatus.type === 'info' && <LoadingIcon className="w-4 h-4 animate-spin" />}
                 {saveStatus.message}
               </div>
             )}
 
             {/* Editor Content */}
-            <div className="texx-1 grid grid-cols-2 overflow-hidden">
+            <div className="flex-1 grid grid-cols-2 overflow-hidden">
               {/* Editor Panel */}
-              <div className="overflow-y-auto p-4 bg-dark-primary">
+              <div className="overflow-y-auto p-4 bg-[#313338]">
                 <ComponentsV2Editor container={container} setContainer={setContainer} />
               </div>
 
               {/* Preview Panel */}
-              <div className="bg-[#313338] border-l border-dark-tertiary flex flex-col">
-                <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
-                  <EyeIcon className="w-4 h-4 text-text-muted" />
-                  <h3 className="text-xs font-bold text-text-header-secondary uppercase tracking-wide">Preview - Components V2</h3>
+              <div className="bg-[#313338] border-l border-[#1e1f22] flex flex-col">
+                <div className="px-4 py-3 border-b border-[#1e1f22] flex items-center gap-2 bg-[#2b2d31]">
+                  <EyeIcon className="w-4 h-4 text-[#949ba4]" />
+                  <h3 className="text-xs font-bold text-[#949ba4] uppercase tracking-wider">Preview</h3>
                 </div>
                 <div className="flex-1 p-4 overflow-y-auto">
                   <ComponentsV2Preview container={container} />
@@ -422,14 +447,14 @@ function App() {
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-28 h-28 bg-dark-secondary rounded-2xl flex items-center justify-center mb-6 opacity-60">
-              <ComponentsIcon className="w-12 h-12 text-text-muted" />
+            <div className="w-24 h-24 bg-[#2b2d31] rounded-2xl flex items-center justify-center mb-6">
+              <ComponentsIcon className="w-10 h-10 text-[#949ba4]" />
             </div>
-            <h2 className="text-2xl font-semibold text-text-header mb-2">Chọn một Template để chỉnh sửa</h2>
-            <p className="text-base text-text-muted max-w-md">Chọn template từ danh sách bên trái để bắt đầu tùy chỉnh Components V2</p>
-            <div className="mt-6 p-4 bg-dark-secondary rounded-lg border border-white/5 max-w-md">
-              <p className="text-sm text-text-normal">
-                <span className="text-discord-blurple font-semibold">💡 Tip:</span> Paste Guild ID vào ô input để tự động tải dữ liệu đã lưu
+            <h2 className="text-xl font-semibold text-[#f2f3f5] mb-2">Chọn một Template</h2>
+            <p className="text-sm text-[#949ba4] max-w-md mb-6">Chọn template từ danh sách bên trái để bắt đầu tùy chỉnh Components V2</p>
+            <div className="p-4 bg-[#2b2d31] rounded-lg border border-[#1e1f22] max-w-md">
+              <p className="text-sm text-[#dbdee1]">
+                <span className="text-[#5865f2] font-semibold">💡 Tip:</span> Paste Guild ID để tự động tải dữ liệu đã lưu
               </p>
             </div>
           </div>

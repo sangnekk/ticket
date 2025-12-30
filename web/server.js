@@ -35,6 +35,265 @@ function setNestedValue(obj, path, value) {
   return obj;
 }
 
+// ============================================
+// AUTO-SCAN COMPONENTS V2 EMBEDS
+// ============================================
+
+// Recursively get all JS files in a directory
+function getAllJsFiles(dir, fileList = []) {
+  const files = fs.readdirSync(dir);
+  
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    
+    if (stat.isDirectory()) {
+      // Skip node_modules, generated, .git
+      if (!['node_modules', 'generated', '.git', 'web'].includes(file)) {
+        getAllJsFiles(filePath, fileList);
+      }
+    } else if (file.endsWith('.js')) {
+      fileList.push(filePath);
+    }
+  }
+  
+  return fileList;
+}
+
+// Extract locale keys from a file content
+function extractLocaleKeys(content) {
+  const keys = new Set();
+  
+  // Pattern: lang.get('key') or lang.get("key")
+  const langGetPattern = /lang\.get\s*\(\s*['"`]([^'"`]+)['"`]/g;
+  let match;
+  while ((match = langGetPattern.exec(content)) !== null) {
+    keys.add(match[1]);
+  }
+  
+  // Pattern: getText('key') or getText("key")
+  const getTextPattern = /getText\s*\(\s*['"`]([^'"`]+)['"`]/g;
+  while ((match = getTextPattern.exec(content)) !== null) {
+    keys.add(match[1]);
+  }
+  
+  // Pattern: t('key') or t("key") - common i18n pattern
+  const tPattern = /\bt\s*\(\s*['"`]([^'"`]+)['"`]/g;
+  while ((match = tPattern.exec(content)) !== null) {
+    keys.add(match[1]);
+  }
+  
+  // Pattern: GT(guildId, locale, 'key') - project specific
+  const gtPattern = /GT\s*\([^,]+,\s*[^,]+,\s*['"`]([^'"`]+)['"`]/g;
+  while ((match = gtPattern.exec(content)) !== null) {
+    keys.add(match[1]);
+  }
+  
+  // Pattern: await GT(..., 'key')
+  const gtAwaitPattern = /await\s+GT\s*\([^)]*['"`]([^'"`]+)['"`]/g;
+  while ((match = gtAwaitPattern.exec(content)) !== null) {
+    keys.add(match[1]);
+  }
+  
+  return Array.from(keys);
+}
+
+// Detect if file uses Components V2
+function usesComponentsV2(content) {
+  return content.includes('EmbedComponentsV2') || 
+         content.includes('createContainer') ||
+         content.includes('ContainerBuilder') ||
+         content.includes('addTextDisplay');
+}
+
+// Extract embed info from file
+function extractEmbedInfo(content, filePath) {
+  const embeds = [];
+  const relativePath = path.relative(path.join(__dirname, '..'), filePath);
+  
+  // Detect embed patterns
+  const patterns = [
+    // Pattern: addTextDisplay with lang.get for title
+    /addTextDisplay\s*\(\s*`[^`]*\$\{lang\.get\s*\(\s*['"`]([^'"`]+)['"`]\s*\)\}[^`]*`\s*\)/g,
+    // Pattern: lang.get for embed_title, embed_description, etc.
+    /lang\.get\s*\(\s*['"`]([^'"`]*(?:embed_title|embed_description|embed_image|welcome_title|welcome_description|denied_title|denied_description|ticket_embed_title|dm_embed_title)[^'"`]*)['"`]\s*\)/g,
+    // Pattern: lang.get for button labels
+    /lang\.get\s*\(\s*['"`]([^'"`]*(?:button_)[^'"`]*)['"`]\s*\)/g,
+  ];
+  
+  const foundKeys = new Set();
+  
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(content)) !== null) {
+      foundKeys.add(match[1]);
+    }
+  }
+  
+  return {
+    file: relativePath,
+    usesV2: usesComponentsV2(content),
+    localeKeys: Array.from(foundKeys)
+  };
+}
+
+// Scan project and build template list
+function scanProjectForEmbeds() {
+  const projectRoot = path.join(__dirname, '..');
+  const jsFiles = getAllJsFiles(projectRoot);
+  const embedFiles = [];
+  
+  for (const file of jsFiles) {
+    try {
+      const content = fs.readFileSync(file, 'utf-8');
+      const info = extractEmbedInfo(content, file);
+      
+      if (info.usesV2 && info.localeKeys.length > 0) {
+        embedFiles.push(info);
+      }
+    } catch (err) {
+      console.error(`Error reading file ${file}:`, err.message);
+    }
+  }
+  
+  return embedFiles;
+}
+
+// Group locale keys by category (e.g., ticket.setup, ticket.create)
+function groupKeysByCategory(keys) {
+  const groups = {};
+  
+  for (const key of keys) {
+    // Extract category from key (e.g., "ticket.setup.embed_title" -> "ticket.setup")
+    const parts = key.split('.');
+    if (parts.length >= 2) {
+      const category = parts.slice(0, -1).join('.');
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(key);
+    }
+  }
+  
+  return groups;
+}
+
+// Build template from grouped keys
+function buildTemplatesFromScan(localeData) {
+  const projectRoot = path.join(__dirname, '..');
+  const jsFiles = getAllJsFiles(projectRoot);
+  const allKeys = new Set();
+  const fileKeyMap = {};
+  
+  // Scan all files for locale keys
+  for (const file of jsFiles) {
+    try {
+      const content = fs.readFileSync(file, 'utf-8');
+      if (!usesComponentsV2(content)) continue;
+      
+      const relativePath = path.relative(projectRoot, file);
+      const keys = extractLocaleKeys(content);
+      
+      // Filter keys that exist in locale and are embed-related
+      const embedKeys = keys.filter(key => {
+        const value = getNestedValue(localeData, key);
+        return value !== undefined && (
+          key.includes('embed_') || 
+          key.includes('title') || 
+          key.includes('description') ||
+          key.includes('button_') ||
+          key.includes('image') ||
+          key.includes('welcome_') ||
+          key.includes('denied_') ||
+          key.includes('dm_embed') ||
+          key.includes('ticket_embed')
+        );
+      });
+      
+      if (embedKeys.length > 0) {
+        fileKeyMap[relativePath] = embedKeys;
+        embedKeys.forEach(k => allKeys.add(k));
+      }
+    } catch (err) {
+      // Skip files that can't be read
+    }
+  }
+  
+  // Group keys by category
+  const grouped = groupKeysByCategory(Array.from(allKeys));
+  
+  // Build templates
+  const templates = [];
+  
+  for (const [category, keys] of Object.entries(grouped)) {
+    const templateKeys = {};
+    const defaultValues = {};
+    
+    // Categorize keys
+    for (const key of keys) {
+      const shortKey = key.split('.').pop(); // e.g., "embed_title" from "ticket.setup.embed_title"
+      templateKeys[shortKey] = key;
+      
+      const value = getNestedValue(localeData, key);
+      if (value !== undefined) {
+        defaultValues[shortKey] = value;
+      }
+    }
+    
+    // Determine template properties
+    const categoryParts = category.split('.');
+    const mainCategory = categoryParts[0]; // e.g., "ticket"
+    const subCategory = categoryParts[1] || ''; // e.g., "setup"
+    
+    // Find which files use this category
+    const sourceFiles = Object.entries(fileKeyMap)
+      .filter(([file, fileKeys]) => fileKeys.some(k => k.startsWith(category)))
+      .map(([file]) => file);
+    
+    // Detect buttons
+    const buttons = [];
+    if (templateKeys.button_buy || templateKeys.button_buy_label) {
+      buttons.push({ id: 'buy', style: 'primary', customId: 'ticket_create_buy' });
+    }
+    if (templateKeys.button_support || templateKeys.button_support_label) {
+      buttons.push({ id: 'support', style: 'secondary', customId: 'ticket_create_support' });
+    }
+    if (templateKeys.button_close) {
+      buttons.push({ id: 'close', style: 'danger', customId: 'ticket_close' });
+    }
+    if (templateKeys.button_delete) {
+      buttons.push({ id: 'delete', style: 'danger', customId: 'ticket_delete' });
+    }
+    
+    // Determine accent color based on category
+    let accentColor = '#5865F2'; // Default blurple
+    if (subCategory === 'claim' || subCategory.includes('success')) {
+      accentColor = '#23a55a'; // Green
+    } else if (subCategory === 'close' || subCategory.includes('denied') || subCategory.includes('error')) {
+      accentColor = '#ed4245'; // Red
+    }
+    
+    // Create template name
+    const templateName = categoryParts
+      .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+      .join(' - ');
+    
+    templates.push({
+      id: category,
+      name: templateName,
+      description: `Auto-detected from ${sourceFiles.length} file(s)`,
+      category: mainCategory,
+      keys: templateKeys,
+      accentColor,
+      buttons,
+      defaultValues,
+      sourceFiles
+    });
+  }
+  
+  return templates.sort((a, b) => a.id.localeCompare(b.id));
+}
+
 // API Routes
 app.get('/api/text-override', async (req, res) => {
   try {
@@ -182,7 +441,7 @@ app.get('/api/locale/:name/keys', async (req, res) => {
   }
 });
 
-// Get Components V2 template structure from locale
+// Get Components V2 template structure - AUTO SCAN from project
 app.get('/api/componentsv2/templates', async (req, res) => {
   try {
     const { locale = 'Vietnamese' } = req.query;
@@ -192,115 +451,28 @@ app.get('/api/componentsv2/templates', async (req, res) => {
       return res.status(404).json({ error: 'Locale not found' });
     }
     
-    const data = JSON.parse(fs.readFileSync(localePath, 'utf-8'));
+    const localeData = JSON.parse(fs.readFileSync(localePath, 'utf-8'));
     
-    // Define template structure based on actual bot commands
-    const templates = [
-      {
-        id: 'ticket.setup',
-        name: 'Ticket Setup',
-        description: 'Container hiển thị khi setup ticket',
-        category: 'ticket',
-        keys: {
-          title: 'ticket.setup.embed_title',
-          description: 'ticket.setup.embed_description',
-          image: 'ticket.setup.embed_image',
-          button_buy_label: 'ticket.setup.button_buy',
-          button_buy_emoji: 'ticket.setup.button_buy_emoji',
-          button_support_label: 'ticket.setup.button_support',
-          button_support_emoji: 'ticket.setup.button_support_emoji',
-        },
-        accentColor: '#5865F2',
-        buttons: [
-          { id: 'buy', style: 'primary', customId: 'ticket_create_buy' },
-          { id: 'support', style: 'secondary', customId: 'ticket_create_support' }
-        ]
-      },
-      {
-        id: 'ticket.create.welcome',
-        name: 'Ticket Welcome',
-        description: 'Container chào mừng khi tạo ticket',
-        category: 'ticket',
-        keys: {
-          title: 'ticket.create.welcome_title',
-          description: 'ticket.create.welcome_description',
-          image: 'ticket.create.welcome_image',
-        },
-        accentColor: '#5865F2',
-        buttons: []
-      },
-      {
-        id: 'ticket.claim',
-        name: 'Ticket Claimed',
-        description: 'Container khi staff claim ticket',
-        category: 'ticket',
-        keys: {
-          title: 'ticket.claim.embed_title',
-          description: 'ticket.claim.embed_description',
-          image: 'ticket.claim.embed_image',
-        },
-        accentColor: '#00FF00',
-        buttons: []
-      },
-      {
-        id: 'ticket.close.denied',
-        name: 'Ticket Close Denied',
-        description: 'Container từ chối đóng ticket',
-        category: 'ticket',
-        keys: {
-          title: 'ticket.close.denied_title',
-          description: 'ticket.close.denied_description',
-          image: 'ticket.close.denied_image',
-        },
-        accentColor: '#FF0000',
-        buttons: []
-      },
-      {
-        id: 'ticket.dm.ticket',
-        name: 'DM - Ticket Embed',
-        description: 'Container gửi vào ticket khi hoàn thành',
-        category: 'ticket',
-        keys: {
-          title: 'ticket.dm.ticket_embed_title',
-          description: 'ticket.dm.ticket_embed_description',
-        },
-        accentColor: '#00FF00',
-        buttons: []
-      },
-      {
-        id: 'ticket.dm.user',
-        name: 'DM - User Embed',
-        description: 'Container gửi DM cho user',
-        category: 'ticket',
-        keys: {
-          title: 'ticket.dm.dm_embed_title',
-          description: 'ticket.dm.dm_embed_description',
-        },
-        accentColor: '#5865F2',
-        buttons: []
-      }
-    ];
+    // Auto-scan project and build templates
+    const templates = buildTemplatesFromScan(localeData);
     
-    // Populate default values from locale
-    const populatedTemplates = templates.map(template => {
-      const defaultValues = {};
-      
-      for (const [field, key] of Object.entries(template.keys)) {
-        const value = getNestedValue(data, key);
-        if (value !== undefined) {
-          defaultValues[field] = value;
-        }
-      }
-      
-      return {
-        ...template,
-        defaultValues
-      };
-    });
-    
-    res.json(populatedTemplates);
+    res.json(templates);
   } catch (error) {
     console.error('Error fetching templates:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get scanned embed files info (for debugging/admin)
+app.get('/api/componentsv2/scan', async (req, res) => {
+  try {
+    const embedFiles = scanProjectForEmbeds();
+    res.json({
+      totalFiles: embedFiles.length,
+      files: embedFiles
+    });
+  } catch (error) {
+    console.error('Error scanning project:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -319,9 +491,8 @@ app.get('/api/componentsv2/template/:templateId', async (req, res) => {
     
     const localeData = JSON.parse(fs.readFileSync(localePath, 'utf-8'));
     
-    // Get template structure
-    const templatesRes = await fetch(`http://localhost:${PORT}/api/componentsv2/templates?locale=${locale}`);
-    const templates = await templatesRes.json();
+    // Auto-scan and find template
+    const templates = buildTemplatesFromScan(localeData);
     const template = templates.find(t => t.id === templateId);
     
     if (!template) {

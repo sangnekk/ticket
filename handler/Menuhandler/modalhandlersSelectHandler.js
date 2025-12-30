@@ -1,6 +1,6 @@
-const { EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const EmbedComponentsV2 = require('../../utils/embedComponentsV2');
 
 module.exports = {
   customId: 'select-modalhandlers',
@@ -11,10 +11,8 @@ module.exports = {
       await interaction.deferUpdate();
       const selectedHandlers = interaction.values;
 
-      // Đường dẫn tới thư mục modal handlers
       const handlersPath = path.join(__dirname, '../../handler/Modalhandler');
 
-      // Tải lại các handlers đã chọn
       let reloadedHandlers = 0;
       let failedHandlers = 0;
 
@@ -23,10 +21,7 @@ module.exports = {
         const handlerPath = path.join(handlersPath, handlerFile);
 
         try {
-          // Xóa cache của handler
           delete require.cache[require.resolve(handlerPath)];
-
-          // Tải lại handler
           require(handlerPath);
 
           reloadedHandlers++;
@@ -37,21 +32,20 @@ module.exports = {
         }
       }
 
-      // Gửi thông báo kết quả
-      const embed = new EmbedBuilder()
-        .setColor(failedHandlers > 0 ? '#FFA500' : '#00FF00')
-        .setTitle(failedHandlers > 0 ? '⚠️ Tải lại một phần thành công' : '✅ Tải lại thành công!')
-        .setDescription(
-          `Đã tải lại ${reloadedHandlers} modal handlers${failedHandlers > 0 ? `, ${failedHandlers} handlers lỗi` : ''}`
-        )
-        .setTimestamp();
+      const container = EmbedComponentsV2.createContainer();
+      
+      if (failedHandlers > 0) {
+        container.addTextDisplay(`## ⚠️ Tải lại một phần thành công`);
+      } else {
+        container.addTextDisplay(`## ✅ Tải lại thành công!`);
+      }
+      
+      container.addSeparator({ divider: true });
+      container.addTextDisplay(`Đã tải lại **${reloadedHandlers}** modal handlers${failedHandlers > 0 ? `, **${failedHandlers}** handlers lỗi` : ''}`);
+      container.addTextDisplay(`-# <t:${Math.floor(Date.now() / 1000)}:f>`);
 
-      await interaction.message.channel.send({ embeds: [embed] });
-
-      // Cập nhật tin nhắn menu thành không có components
-      await interaction.message.edit({
-        components: [],
-      });
+      await interaction.message.channel.send(container.build());
+      await interaction.message.edit({ components: [] });
     } catch (error) {
       console.error('Lỗi trong modalhandlersSelectHandler:', error);
       await interaction.message.channel.send('❌ Có lỗi xảy ra khi tải lại modal handlers!');
