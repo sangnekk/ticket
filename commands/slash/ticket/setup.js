@@ -52,14 +52,14 @@ module.exports = {
 
   async execute(interaction, client) {
     const { guild, user } = interaction;
-    const config = client.config || require('../../../config.json');
+    const config = require('../../../config.json');
 
     // Lấy ngôn ngữ
     let locale = await getGuildLanguage(guild.id);
     if (!locale) locale = 'Vietnamese';
 
     // Kiểm tra quyền: chỉ owner server hoặc dev
-    const isOwner = guild.ownerId === user.id;
+    const isOwner = user.id === config.OwnerId;
     const isDev = user.id === config.DevID;
 
     if (!isOwner && !isDev) {
