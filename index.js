@@ -198,9 +198,31 @@ function startBot() {
   }
 
   // Ready event
-  client.once(Events.ClientReady, c => {
+  client.once(Events.ClientReady, async c => {
     const shardInfo = shardIds ? `Shards [${shardIds.join(', ')}]` : 'No Shards';
     console.log(`[Cluster ${clusterId}] ${T(i18n.getLocale(), 'ready', { tag: c.user.tag })} - ${shardInfo}`);
+    
+    // Khởi tạo Config Sync để nhận real-time updates từ web
+    try {
+      const configSync = require('./utils/configSync');
+      await configSync.initialize();
+      
+      // Lắng nghe stock config updates
+      configSync.on('stock', (guildId, config) => {
+        console.log(`[Cluster ${clusterId}] 📥 Nhận stock config update cho guild ${guildId}`);
+        // Config đã được lưu vào database, bot sẽ tự động lấy từ DB khi cần
+        // Không cần cache vì mỗi lần chạy command đều query DB
+      });
+      
+      // Lắng nghe text override updates
+      configSync.on('text-override', (guildId, config) => {
+        console.log(`[Cluster ${clusterId}] 📥 Nhận text override update cho guild ${guildId}`);
+      });
+      
+      console.log(`[Cluster ${clusterId}] ✅ Config sync đã sẵn sàng`);
+    } catch (err) {
+      console.error(`[Cluster ${clusterId}] ⚠️ Không thể khởi tạo config sync:`, err.message);
+    }
     
     // Thông báo cluster đã sẵn sàng qua IPC
     process.send?.({ name: 'ready', clusterId, shardIds });

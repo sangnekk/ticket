@@ -419,7 +419,21 @@ class ComponentsV2ContainerWrapper {
       options instanceof SeparatorBuilder ? options : new SeparatorBuilder();
 
     if (!(options instanceof SeparatorBuilder)) {
-      if (options.spacing) separator.setSpacing(options.spacing);
+      // Map spacing string to valid enum values
+      if (options.spacing) {
+        const spacingMap = {
+          'small': 'Small',
+          'Small': 'Small',
+          'large': 'Large',
+          'Large': 'Large',
+          '1': 'Small',
+          '2': 'Large',
+        };
+        const validSpacing = spacingMap[options.spacing];
+        if (validSpacing) {
+          separator.setSpacing(validSpacing);
+        }
+      }
       if (options.divider) separator.setDivider(options.divider);
     }
 

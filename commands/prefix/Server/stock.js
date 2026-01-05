@@ -116,10 +116,22 @@ module.exports = {
           break;
 
         case 'separator':
-          container.addSeparator({
+          const separatorOptions = {
             divider: section.divider !== false,
-            spacing: section.spacing || undefined,
-          });
+          };
+          
+          // Map spacing to valid values
+          if (section.spacing) {
+            const spacingMap = {
+              'small': 'Small',
+              'Small': 'Small',
+              'large': 'Large',
+              'Large': 'Large',
+            };
+            separatorOptions.spacing = spacingMap[section.spacing] || undefined;
+          }
+          
+          container.addSeparator(separatorOptions);
           break;
 
         case 'image':

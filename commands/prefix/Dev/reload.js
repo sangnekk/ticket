@@ -3,14 +3,15 @@ const fs = require('fs');
 const path = require('path');
 const { DevID } = require('../../../config.json');
 const EmbedComponentsV2 = require('../../../utils/embedComponentsV2');
+const hotReloadManager = require('../../../utils/hotReload');
 
 module.exports = {
   name: 'reload',
   description: 'Tải lại các thành phần của bot (chỉ dành cho admin)',
   category: 'Dev',
   aliases: ['rl'],
-  usage: '[commands | events | utils | menuhandler | buttons | contexthandler | modalhandler]',
-  examples: ['', 'commands', 'events', 'utils', 'menuhandler'],
+  usage: '[commands | events | utils | menuhandler | buttons | contexthandler | modalhandler | prisma | all]',
+  examples: ['', 'commands', 'events', 'utils', 'prisma', 'all'],
   cooldown: 10,
   permissions: {
     bot: ['SendMessages', 'EmbedLinks'],
@@ -35,6 +36,10 @@ module.exports = {
       return showContextHandlerMenu(message);
     } else if (args[0] === 'modalhandler') {
       return showModalHandlerMenu(message);
+    } else if (args[0] === 'prisma') {
+      return reloadPrisma(message, client);
+    } else if (args[0] === 'all') {
+      return reloadAll(message, client);
     } else {
       const container = EmbedComponentsV2.createContainer();
       
@@ -49,7 +54,9 @@ module.exports = {
 \`reload menuhandler\` - Chọn menu handlers để tải lại
 \`reload buttons\` - Chọn buttons để tải lại
 \`reload contexthandler\` - Chọn context handlers để tải lại
-\`reload modalhandler\` - Chọn modal handlers để tải lại`);
+\`reload modalhandler\` - Chọn modal handlers để tải lại
+\`reload prisma\` - 🔥 Tải lại Prisma Client (không cần restart!)
+\`reload all\` - 🚀 Tải lại tất cả (full reload)`);
       container.addTextDisplay(`-# <t:${Math.floor(Date.now() / 1000)}:f>`);
 
       await message.channel.send(container.build());

@@ -210,6 +210,14 @@ async function getUserOpenTicket(guildId, userId, buttonType) {
 // Stock Config functions (flexible sections + buttons system)
 async function getStockConfig(guildId) {
   try {
+    // Kiểm tra xem model có tồn tại không
+    if (!prisma.stockConfig) {
+      console.error('❌ StockConfig model không tồn tại trong Prisma client.');
+      console.error('📝 Vui lòng chạy: npx prisma generate');
+      console.error('🔄 Sau đó restart bot');
+      return null;
+    }
+    
     return await prisma.stockConfig.findUnique({
       where: { guildId },
     });
@@ -221,6 +229,14 @@ async function getStockConfig(guildId) {
 
 async function upsertStockConfig(guildId, data) {
   try {
+    // Kiểm tra xem model có tồn tại không
+    if (!prisma.stockConfig) {
+      console.error('❌ StockConfig model không tồn tại trong Prisma client.');
+      console.error('📝 Vui lòng chạy: npx prisma generate');
+      console.error('🔄 Sau đó restart bot');
+      throw new Error('StockConfig model không khả dụng');
+    }
+    
     return await prisma.stockConfig.upsert({
       where: { guildId },
       update: {
