@@ -254,5 +254,11 @@
 			"dm_success": "✅ Đã gửi thông báo DM cho {user}!",
 			"dm_failed": "⚠️ Không thể gửi DM cho {user}. User có thể đã tắt DM."
 		}
+	},
+	"stock": {
+		"no_config": "❌ Chưa có cấu hình stock! Vui lòng thiết lập qua web dashboard.",
+		"no_sections": "❌ Chưa có nội dung stock! Vui lòng thêm sections qua web dashboard.",
+		"title": "📦 Stock",
+		"updated_at": "Cập nhật lúc"
 	}
 }

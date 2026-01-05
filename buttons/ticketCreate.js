@@ -159,14 +159,7 @@ module.exports = {
       welcomeContainer.addSeparator({ divider: true });
       welcomeContainer.addTextDisplay(
         `-# J & D Store - Ticket System • <t:${Math.floor(Date.now() / 1000)}:f>`
-      );
-
-      // Send mention first (separate message) to ping staff - KHÔNG dùng Components V2
-      await ticketChannel.send({
-        content: `${user}`,
-        allowedMentions: { users: [user.id], roles: [config.staffRoleId] }
-      });
-      
+      );    
       // Then send the Components V2 message (không có content)
       const containerPayload = welcomeContainer.build();
       await ticketChannel.send(containerPayload);

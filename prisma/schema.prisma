@@ -78,3 +78,40 @@ model GuildTextOverride {
 
   @@id([guildId, key])
 }
+
+// Stock Config - Cấu hình embed cho lệnh +stock (1 guild = 1 config)
+model StockConfig {
+  id          Int      @id @default(autoincrement())
+  guildId     String   @unique
+  enabled     Boolean  @default(true)
+  sections    String   @default("[]") // JSON array of sections
+  buttons     String   @default("[]") // JSON array of buttons
+  footer      String?  // Footer text với placeholders
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([guildId])
+}
+
+// Section types trong JSON:
+// - { type: "text", content: "..." }
+// - { type: "separator", divider: true/false, spacing: "small"|"large" }
+// - { type: "image", url: "..." }
+// - { type: "heading", content: "...", level: 1|2|3 }
+//
+// Button format trong JSON:
+// { label: "...", emoji: "...", style: "primary"|"secondary"|"success"|"danger"|"link", customId?: "...", url?: "..." }
+//
+// Placeholders hỗ trợ:
+// {user} - mention user
+// {user.tag} - username#0000
+// {user.name} - username
+// {user.id} - user id
+// {guild.name} - tên server
+// {guild.id} - server id
+// {guild.memberCount} - số thành viên
+// {timestamp} - unix timestamp
+// {timestamp:R} - relative time
+// {timestamp:F} - full date time
+// {date} - ngày hiện tại
+// {time} - giờ hiện tại

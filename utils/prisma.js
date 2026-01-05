@@ -207,6 +207,42 @@ async function getUserOpenTicket(guildId, userId, buttonType) {
   }
 }
 
+// Stock Config functions (flexible sections + buttons system)
+async function getStockConfig(guildId) {
+  try {
+    return await prisma.stockConfig.findUnique({
+      where: { guildId },
+    });
+  } catch (error) {
+    console.error(`Lỗi khi lấy stock config của guild ${guildId}:`, error);
+    return null;
+  }
+}
+
+async function upsertStockConfig(guildId, data) {
+  try {
+    return await prisma.stockConfig.upsert({
+      where: { guildId },
+      update: {
+        sections: data.sections,
+        buttons: data.buttons,
+        footer: data.footer,
+        enabled: data.enabled,
+      },
+      create: {
+        guildId,
+        sections: data.sections || '[]',
+        buttons: data.buttons || '[]',
+        footer: data.footer,
+        enabled: data.enabled !== false,
+      },
+    });
+  } catch (error) {
+    console.error(`Lỗi khi cập nhật stock config cho guild ${guildId}:`, error);
+    throw error;
+  }
+}
+
 module.exports = {
   prisma,
   connectDatabase,
@@ -223,4 +259,7 @@ module.exports = {
   getTicketConfig,
   getTicketByChannel,
   getUserOpenTicket,
+  // Stock Config
+  getStockConfig,
+  upsertStockConfig,
 };

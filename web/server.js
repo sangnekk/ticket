@@ -564,6 +564,111 @@ app.get('/api/componentsv2/template/:templateId', async (req, res) => {
   }
 });
 
+// ============================================
+// STOCK CONFIG API (Flexible sections + buttons system)
+// ============================================
+
+// Get stock config for a guild
+app.get('/api/stock-config/:guildId', async (req, res) => {
+  try {
+    const { guildId } = req.params;
+    
+    let config = await prisma.stockConfig.findUnique({
+      where: { guildId }
+    });
+    
+    // Return default config if not exists
+    if (!config) {
+      config = {
+        guildId,
+        enabled: true,
+        sections: '[]',
+        buttons: '[]',
+        footer: '-# {guild.name} • {timestamp:f}'
+      };
+    }
+    
+    // Parse JSON fields
+    res.json({
+      ...config,
+      sections: JSON.parse(config.sections || '[]'),
+      buttons: JSON.parse(config.buttons || '[]')
+    });
+  } catch (error) {
+    console.error('Error fetching stock config:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Save stock config for a guild
+app.post('/api/stock-config/:guildId', async (req, res) => {
+  try {
+    const { guildId } = req.params;
+    const { sections, buttons, footer, enabled } = req.body;
+    
+    const config = await prisma.stockConfig.upsert({
+      where: { guildId },
+      update: {
+        sections: JSON.stringify(sections || []),
+        buttons: JSON.stringify(buttons || []),
+        footer,
+        enabled: enabled !== false
+      },
+      create: {
+        guildId,
+        sections: JSON.stringify(sections || []),
+        buttons: JSON.stringify(buttons || []),
+        footer,
+        enabled: enabled !== false
+      }
+    });
+    
+    res.json({ 
+      success: true, 
+      data: {
+        ...config,
+        sections: JSON.parse(config.sections),
+        buttons: JSON.parse(config.buttons)
+      }
+    });
+  } catch (error) {
+    console.error('Error saving stock config:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get available placeholders
+app.get('/api/stock-config/placeholders', async (req, res) => {
+  res.json({
+    user: [
+      { key: '{user}', description: 'Mention user' },
+      { key: '{user.tag}', description: 'Username#0000' },
+      { key: '{user.name}', description: 'Username' },
+      { key: '{user.id}', description: 'User ID' },
+      { key: '{user.avatar}', description: 'Avatar URL' },
+    ],
+    guild: [
+      { key: '{guild.name}', description: 'Tên server' },
+      { key: '{guild.id}', description: 'Server ID' },
+      { key: '{guild.memberCount}', description: 'Số thành viên' },
+      { key: '{guild.icon}', description: 'Icon URL' },
+    ],
+    time: [
+      { key: '{timestamp}', description: 'Unix timestamp' },
+      { key: '{timestamp:R}', description: 'Relative (2 hours ago)' },
+      { key: '{timestamp:F}', description: 'Full date time' },
+      { key: '{timestamp:f}', description: 'Short date time' },
+      { key: '{timestamp:D}', description: 'Date only' },
+      { key: '{timestamp:T}', description: 'Time only' },
+      { key: '{date}', description: 'Ngày hiện tại' },
+      { key: '{time}', description: 'Giờ hiện tại' },
+    ],
+    other: [
+      { key: '{channel}', description: 'Mention channel hiện tại' },
+    ]
+  });
+});
+
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'dist')));

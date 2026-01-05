@@ -257,5 +257,11 @@
       "dm_success": "✅ DM notification sent to {user}!",
       "dm_failed": "⚠️ Cannot send DM to {user}. User may have DMs disabled."
     }
+  },
+  "stock": {
+    "no_config": "❌ No stock config found! Please set up via web dashboard.",
+    "no_sections": "❌ No stock content! Please add sections via web dashboard.",
+    "title": "📦 Stock",
+    "updated_at": "Updated at"
   }
 }

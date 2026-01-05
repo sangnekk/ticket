@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import EmbedList from './components/EmbedList'
 import ComponentsV2Editor from './components/ComponentsV2Editor'
 import ComponentsV2Preview from './components/ComponentsV2Preview'
-import { HomeIcon, EditIcon, DownloadIcon, RefreshIcon, SaveIcon, EyeIcon, LoadingIcon, ComponentsIcon } from './components/Icons'
+import StockEditor from './components/StockEditor'
+import StockConfigPreview from './components/StockConfigPreview'
+import { HomeIcon, EditIcon, DownloadIcon, RefreshIcon, SaveIcon, EyeIcon, LoadingIcon, ComponentsIcon, StockIcon } from './components/Icons'
 import './index.css'
 
 const DEFAULT_CONTAINER = {
@@ -24,6 +26,14 @@ function App() {
   const [saveStatus, setSaveStatus] = useState({ type: '', message: '' })
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(true)
+  const [activeTab, setActiveTab] = useState('templates') // 'templates' or 'stock'
+  const [stockConfig, setStockConfig] = useState({
+    enabled: true,
+    sections: [],
+    buttons: [],
+    footer: '-# {guild.name} • {timestamp:f}'
+  })
+  const [isLoadingStock, setIsLoadingStock] = useState(false)
 
   useEffect(() => {
     fetch('/api/locales')
@@ -45,6 +55,51 @@ function App() {
         setIsLoadingTemplates(false)
       })
   }, [locale])
+
+  // Load stock config when guildId changes
+  useEffect(() => {
+    if (guildId && activeTab === 'stock') {
+      loadStockConfig()
+    }
+  }, [guildId, activeTab])
+
+  const loadStockConfig = async () => {
+    if (!guildId) return
+    setIsLoadingStock(true)
+    try {
+      const res = await fetch(`/api/stock-config/${guildId}`)
+      const data = await res.json()
+      setStockConfig(data)
+    } catch (error) {
+      console.error('Error loading stock config:', error)
+    }
+    setIsLoadingStock(false)
+  }
+
+  const handleSaveStock = async () => {
+    if (!guildId) {
+      setSaveStatus({ type: 'error', message: 'Vui lòng nhập Guild ID!' })
+      setTimeout(() => setSaveStatus({ type: '', message: '' }), 2000)
+      return
+    }
+    
+    setIsLoadingStock(true)
+    try {
+      const res = await fetch(`/api/stock-config/${guildId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(stockConfig)
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSaveStatus({ type: 'success', message: 'Đã lưu!' })
+      }
+    } catch (error) {
+      setSaveStatus({ type: 'error', message: 'Lỗi lưu!' })
+    }
+    setIsLoadingStock(false)
+    setTimeout(() => setSaveStatus({ type: '', message: '' }), 2000)
+  }
 
   const loadTemplateData = useCallback(async (template, gId) => {
     if (!template) return null
@@ -371,8 +426,34 @@ function App() {
           </select>
         </div>
 
+        {/* Tab Switcher */}
+        <div className="p-3 border-b border-[#1e1f22] flex gap-2">
+          <button
+            onClick={() => setActiveTab('templates')}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'templates'
+                ? 'bg-[#5865f2] text-white'
+                : 'bg-[#1e1f22] text-[#949ba4] hover:text-[#dbdee1]'
+            }`}
+          >
+            <ComponentsIcon className="w-4 h-4" />
+            Templates
+          </button>
+          <button
+            onClick={() => setActiveTab('stock')}
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'stock'
+                ? 'bg-[#5865f2] text-white'
+                : 'bg-[#1e1f22] text-[#949ba4] hover:text-[#dbdee1]'
+            }`}
+          >
+            <StockIcon className="w-4 h-4" />
+            Stock
+          </button>
+        </div>
+
         {/* Template List */}
-        {isLoadingTemplates ? (
+        {activeTab === 'templates' && (isLoadingTemplates ? (
           <div className="flex-1 flex items-center justify-center">
             <LoadingIcon className="w-8 h-8 text-[#5865f2] animate-spin" />
           </div>
@@ -382,6 +463,13 @@ function App() {
             selectedTemplate={selectedTemplate}
             onSelect={handleSelectTemplate}
           />
+        ))}
+
+        {/* Stock Editor in Sidebar */}
+        {activeTab === 'stock' && (
+          <div className="flex-1 overflow-y-auto p-3">
+            <p className="text-xs text-[#949ba4] mb-2">Chọn embed từ panel chính để chỉnh sửa</p>
+          </div>
         )}
 
         {/* Footer */}
@@ -392,7 +480,79 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden bg-[#313338]">
-        {selectedTemplate ? (
+        {activeTab === 'stock' ? (
+          /* Stock Editor View */
+          <>
+            {/* Header */}
+            <header className="flex justify-between items-center px-6 py-3 bg-[#2b2d31] border-b border-[#1e1f22]">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-[#1e1f22] rounded-lg flex items-center justify-center">
+                  <StockIcon className="w-4 h-4 text-[#dbdee1]" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-[#f2f3f5]">Stock Config</h2>
+                  <span className="text-xs text-[#949ba4]">Quản lý embed hiển thị stock sản phẩm</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={loadStockConfig} className="btn btn-secondary" disabled={isLoadingStock || !guildId}>
+                  {isLoadingStock ? <LoadingIcon className="w-4 h-4 animate-spin" /> : <DownloadIcon className="w-4 h-4" />}
+                  <span>Tải</span>
+                </button>
+                <button onClick={handleSaveStock} className="btn btn-primary" disabled={isLoadingStock || !guildId}>
+                  <SaveIcon className="w-4 h-4" />
+                  <span>Lưu</span>
+                </button>
+              </div>
+            </header>
+
+            {/* Status Bar */}
+            {saveStatus.message && (
+              <div className={`px-6 py-2.5 text-sm font-medium flex items-center gap-2 animate-slideDown
+                ${saveStatus.type === 'success' ? 'bg-[#23a55a]/15 text-[#23a55a] border-l-4 border-[#23a55a]' : ''}
+                ${saveStatus.type === 'error' ? 'bg-[#ed4245]/15 text-[#ed4245] border-l-4 border-[#ed4245]' : ''}
+                ${saveStatus.type === 'warning' ? 'bg-[#fee75c]/15 text-[#fee75c] border-l-4 border-[#fee75c]' : ''}
+                ${saveStatus.type === 'info' ? 'bg-[#5865f2]/15 text-[#5865f2] border-l-4 border-[#5865f2]' : ''}`}>
+                {saveStatus.type === 'info' && <LoadingIcon className="w-4 h-4 animate-spin" />}
+                {saveStatus.message}
+              </div>
+            )}
+
+            {/* Stock Editor Content */}
+            {!guildId ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                <div className="w-24 h-24 bg-[#2b2d31] rounded-2xl flex items-center justify-center mb-6">
+                  <HomeIcon className="w-10 h-10 text-[#949ba4]" />
+                </div>
+                <h2 className="text-xl font-semibold text-[#f2f3f5] mb-2">Nhập Guild ID</h2>
+                <p className="text-sm text-[#949ba4] max-w-md">Paste Guild ID vào sidebar để bắt đầu quản lý Stock Config</p>
+              </div>
+            ) : (
+              <div className="flex-1 grid grid-cols-2 overflow-hidden">
+                {/* Editor Panel */}
+                <div className="overflow-y-auto bg-[#313338]">
+                  <StockEditor 
+                    guildId={guildId}
+                    config={stockConfig}
+                    setConfig={setStockConfig}
+                    isLoading={isLoadingStock}
+                  />
+                </div>
+
+                {/* Preview Panel */}
+                <div className="bg-[#313338] border-l border-[#1e1f22] flex flex-col">
+                  <div className="px-4 py-3 border-b border-[#1e1f22] flex items-center gap-2 bg-[#2b2d31]">
+                    <EyeIcon className="w-4 h-4 text-[#949ba4]" />
+                    <h3 className="text-xs font-bold text-[#949ba4] uppercase tracking-wider">Preview</h3>
+                  </div>
+                  <div className="flex-1 p-4 overflow-y-auto">
+                    <StockConfigPreview config={stockConfig} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        ) : selectedTemplate ? (
           <>
             {/* Header */}
             <header className="flex justify-between items-center px-6 py-3 bg-[#2b2d31] border-b border-[#1e1f22]">

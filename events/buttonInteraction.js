@@ -37,7 +37,14 @@ module.exports = {
       const result = await button.execute(interaction, client, { selectedValue });
       if (result) {
         if (interaction.replied || interaction.deferred) {
-          await interaction.editReply(result);
+          await interaction.editReply(result).catch(async (err) => {
+            // Nếu message không tồn tại, gửi message mới
+            if (err.code === 10008) {
+              await interaction.followUp({ ...result, ephemeral: true }).catch(() => {});
+            } else {
+              throw err;
+            }
+          });
         } else {
           await interaction.reply(result);
         }
@@ -49,10 +56,19 @@ module.exports = {
         ephemeral: true,
       };
 
-      if (interaction.replied || interaction.deferred) {
-        await interaction.editReply(errorMessage);
-      } else {
-        await interaction.reply(errorMessage);
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.editReply(errorMessage).catch(async (err) => {
+            // Nếu message không tồn tại, gửi followUp
+            if (err.code === 10008) {
+              await interaction.followUp(errorMessage).catch(() => {});
+            }
+          });
+        } else {
+          await interaction.reply(errorMessage);
+        }
+      } catch (replyError) {
+        console.error('Không thể gửi error message:', replyError);
       }
     }
   },

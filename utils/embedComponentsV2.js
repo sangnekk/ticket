@@ -542,6 +542,11 @@ class ComponentsV2ContainerWrapper {
       payload.flags |= MessageFlags.Ephemeral;
     }
 
+    // Ensure no invalid nonce is set
+    if (payload.nonce !== undefined && payload.nonce !== null) {
+      delete payload.nonce;
+    }
+
     return payload;
   }
 }
