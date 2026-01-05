@@ -19,7 +19,13 @@ module.exports = {
     let locale = await getGuildLanguage(guild.id);
     if (!locale) locale = 'Vietnamese';
 
-    await interaction.deferReply({ flags: 64 });
+    // Defer reply ngay lập tức
+    try {
+      await interaction.deferReply({ flags: 64 });
+    } catch (deferError) {
+      console.error('Không thể defer reply:', deferError);
+      return; // Interaction đã hết hạn, không thể xử lý
+    }
 
     try {
       // Lấy config ticket
@@ -28,8 +34,10 @@ module.exports = {
       });
 
       if (!config) {
-        return interaction.editReply({
+        return await interaction.editReply({
           content: await GT(guild.id, locale, 'ticket.claim.not_setup'),
+        }).catch(err => {
+          console.error('Không thể edit reply (not_setup):', err);
         });
       }
 
@@ -38,8 +46,10 @@ module.exports = {
       const isStaff = member.roles.cache.has(config.staffRoleId);
 
       if (!isStaff) {
-        return interaction.editReply({
+        return await interaction.editReply({
           content: await GT(guild.id, locale, 'ticket.claim.not_staff'),
+        }).catch(err => {
+          console.error('Không thể edit reply (not_staff):', err);
         });
       }
 
@@ -49,18 +59,22 @@ module.exports = {
       });
 
       if (!ticket) {
-        return interaction.editReply({
+        return await interaction.editReply({
           content: await GT(guild.id, locale, 'ticket.claim.not_ticket'),
+        }).catch(err => {
+          console.error('Không thể edit reply (not_ticket):', err);
         });
       }
 
       // Kiểm tra ticket đã được claim chưa
       if (ticket.claimedBy) {
         const claimedUser = await client.users.fetch(ticket.claimedBy).catch(() => null);
-        return interaction.editReply({
+        return await interaction.editReply({
           content: await GT(guild.id, locale, 'ticket.claim.already_claimed', {
             staff: claimedUser ? claimedUser.tag : 'một staff khác',
           }),
+        }).catch(err => {
+          console.error('Không thể edit reply (already_claimed):', err);
         });
       }
 
@@ -105,12 +119,21 @@ module.exports = {
 
       await interaction.editReply({
         content: await GT(guild.id, locale, 'ticket.claim.success'),
+      }).catch(err => {
+        console.error('Không thể edit reply (success):', err);
       });
     } catch (error) {
       console.error('Lỗi khi claim ticket:', error);
-      await interaction.editReply({
-        content: await GT(guild.id, locale, 'ticket.claim.error'),
-      });
+      
+      // Kiểm tra xem interaction còn valid không
+      try {
+        await interaction.editReply({
+          content: await GT(guild.id, locale, 'ticket.claim.error'),
+        });
+      } catch (replyError) {
+        console.error('Không thể edit reply (error):', replyError);
+        // Interaction đã hết hạn, không thể phản hồi
+      }
     }
   },
 };

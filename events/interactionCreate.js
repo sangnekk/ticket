@@ -86,16 +86,25 @@ module.exports = {
                 content: errorMessage,
               });
             } else {
-              // Nếu đã reply, thử gửi DM
-              await notifyUser({
-                error,
-                user: interaction.user,
-                source: interaction,
-                context: { action: `thực hiện lệnh /${interaction.commandName}` },
+              // Nếu đã reply, thử gửi followUp
+              await interaction.followUp({
+                content: errorMessage,
+                flags: MessageFlags.Ephemeral,
+              }).catch(() => {
+                // Nếu followUp thất bại, thử gửi DM
+                notifyUser({
+                  error,
+                  user: interaction.user,
+                  source: interaction,
+                  context: { action: `thực hiện lệnh /${interaction.commandName}` },
+                }).catch(() => {});
               });
             }
           } catch (notifyError) {
-            console.error('Không thể thông báo lỗi cho người dùng:', notifyError);
+            // Chỉ log nếu không phải lỗi Unknown interaction
+            if (notifyError.code !== 10062) {
+              console.error('Không thể thông báo lỗi cho người dùng:', notifyError);
+            }
           }
         }
       }

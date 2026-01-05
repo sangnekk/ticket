@@ -182,11 +182,17 @@ module.exports = {
 
         if (!interaction.replied && !interaction.deferred) {
           return interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral }).catch(e => {
-            console.error(T(userLocale, 'events.slash_response.error_send'), e);
+            // Chỉ log nếu không phải lỗi Unknown interaction
+            if (e.code !== 10062) {
+              console.error(T(userLocale, 'events.slash_response.error_send'), e);
+            }
           });
         } else if (interaction.deferred) {
           return interaction.editReply({ embeds: [errorEmbed] }).catch(e => {
-            console.error(T(userLocale, 'events.slash_response.error_send'), e);
+            // Chỉ log nếu không phải lỗi Unknown interaction
+            if (e.code !== 10062) {
+              console.error(T(userLocale, 'events.slash_response.error_send'), e);
+            }
           });
         }
       }
