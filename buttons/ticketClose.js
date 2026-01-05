@@ -56,7 +56,9 @@ module.exports = {
         );
         denyContainer.addSeparator({ divider: true });
         denyContainer.addTextDisplay(
-          await GT(guild.id, locale, 'ticket.close.denied_description')
+          await GT(guild.id, locale, 'ticket.close.denied_description', {
+            user: `${user}`,
+          })
         );
 
         // Thêm MediaGallery nếu có image
@@ -71,7 +73,9 @@ module.exports = {
           `-# <t:${Math.floor(Date.now() / 1000)}:f>`
         );
 
-        return interaction.editReply(denyContainer.build());
+        // Xóa deferred reply và gửi message mới để MediaGallery hiển thị đúng
+        await interaction.deleteReply().catch(() => {});
+        return channel.send(denyContainer.build());
       }
 
       // Nếu là staff hoặc admin, xóa ticket
@@ -107,7 +111,9 @@ module.exports = {
         );
         denyContainer.addSeparator({ divider: true });
         denyContainer.addTextDisplay(
-          await GT(guild.id, locale, 'ticket.close.denied_description')
+          await GT(guild.id, locale, 'ticket.close.denied_description', {
+            user: `${user}`,
+          })
         );
 
         // Thêm MediaGallery nếu có image
@@ -122,7 +128,9 @@ module.exports = {
           `-# <t:${Math.floor(Date.now() / 1000)}:f>`
         );
 
-        return interaction.editReply(denyContainer.build());
+        // Xóa deferred reply và gửi message mới để MediaGallery hiển thị đúng
+        await interaction.deleteReply().catch(() => {});
+        return channel.send(denyContainer.build());
       }
     } catch (error) {
       console.error('Lỗi khi close ticket:', error);

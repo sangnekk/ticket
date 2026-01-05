@@ -125,8 +125,9 @@ module.exports = {
       });
 
       // Tạo container chào mừng trong ticket với EmbedComponentsV2
-      const typeEmoji = buttonType === 'buy' ? '📦' : '❓';
-      const accentColor = buttonType === 'buy' ? 0x5865F2 : 0xFFA500;
+      const typeEmoji = buttonType === 'buy' 
+        ? await GT(guild.id, locale, 'ticket.setup.button_buy_emoji')
+        : await GT(guild.id, locale, 'ticket.setup.button_support_emoji');
       const welcomeImage = await GT(guild.id, locale, 'ticket.create.welcome_image');
       
       const welcomeContainer = EmbedComponentsV2.createContainer();
@@ -160,10 +161,15 @@ module.exports = {
         `-# J & D Store - Ticket System • <t:${Math.floor(Date.now() / 1000)}:f>`
       );
 
+      // Send mention first (separate message) to ping staff - KHÔNG dùng Components V2
       await ticketChannel.send({
-        content: `${user} | <@&${config.staffRoleId}>`,
-        ...welcomeContainer.build(),
+        content: `${user}`,
+        allowedMentions: { users: [user.id], roles: [config.staffRoleId] }
       });
+      
+      // Then send the Components V2 message (không có content)
+      const containerPayload = welcomeContainer.build();
+      await ticketChannel.send(containerPayload);
 
       await interaction.editReply({
         content: await GT(guild.id, locale, 'ticket.create.success', { channel: `${ticketChannel}` }),

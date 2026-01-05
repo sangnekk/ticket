@@ -1,4 +1,8 @@
-const { ButtonStyle } = require('discord.js');
+const {
+  ButtonStyle,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+} = require('discord.js');
 const { prisma, getGuildLanguage } = require('../../../utils/prisma');
 const { GT } = require('../../../utils/guildI18n');
 const EmbedComponentsV2 = require('../../../utils/embedComponentsV2');
@@ -10,7 +14,7 @@ module.exports = {
   category: 'Ticket',
 
   async execute(message) {
-    const { guild, channel } = message;
+    const { guild, channel, author } = message;
 
     // Lấy ngôn ngữ
     let locale = await getGuildLanguage(guild.id);
@@ -32,19 +36,30 @@ module.exports = {
       }
 
       // Tạo container close với Components V2
+      const closeImage = await GT(guild.id, locale, 'ticket.close.embed_image');
       const container = EmbedComponentsV2.createContainer();
       
       container.addTextDisplay(`## ${await GT(guild.id, locale, 'ticket.close.embed_title')}`);
       container.addSeparator({ divider: true });
-      container.addTextDisplay(await GT(guild.id, locale, 'ticket.close.embed_description'));
+      container.addTextDisplay(await GT(guild.id, locale, 'ticket.close.embed_description', {
+        user: `${author}`,
+      }));
+
+      // Thêm MediaGallery nếu có image
+      if (closeImage && closeImage !== 'ticket.close.embed_image') {
+        const gallery = new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL(closeImage)
+        );
+        container.addMediaGallery(gallery);
+      }
+
       container.addSeparator({ divider: true });
       
       // Button đóng ticket
       container.addButton(
         await GT(guild.id, locale, 'ticket.close.button_close'),
         `ticket_close_${channel.id}`,
-        ButtonStyle.Danger,
-        { emoji: '🗑️' }
+        ButtonStyle.Danger
       );
       
       container.addTextDisplay(`-# J & D Store - Ticket System • <t:${Math.floor(Date.now() / 1000)}:f>`);

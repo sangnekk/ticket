@@ -122,87 +122,32 @@ module.exports = {
 
       const logChannelId = GLOBAL_LOG_CHANNEL_ID;
 
-      // Gửi log
-      try {
-        if (logChannelId) {
+      // Gửi log vào channel (không log ra console nếu có logChannelId)
+      if (logChannelId) {
+        try {
           const logChannel = await client.channels.fetch(logChannelId);
           if (logChannel) {
             await logChannel.send({ embeds: [logEmbed] });
-          } else {
-            const notFoundKey = 'events.slash_response.log_channel_not_found';
-            const logMsgKey = 'events.slash_response.log_message';
-
-            const notFoundOverride = await getGuildTextOverride(
-              interaction.guild?.id,
-              notFoundKey
-            );
-            const logMsgOverride = await getGuildTextOverride(interaction.guild?.id, logMsgKey);
-
-            const notFoundText =
-              notFoundOverride ||
-              T(userLocale, notFoundKey, {
-                channel: logChannelId,
-              });
-
-            const logMsgText =
-              logMsgOverride ||
-              T(userLocale, logMsgKey, {
-                user: interaction.user.tag,
-                command: interaction.commandName,
-                guild: interaction.guild.name,
-              });
-
-            console.log(notFoundText);
-            console.log(logMsgText);
           }
-        } else {
-          const logMsgKey = 'events.slash_response.log_message';
-          const logMsgOverride = await getGuildTextOverride(interaction.guild?.id, logMsgKey);
-
-          const logMsgText =
-            logMsgOverride ||
-            T(userLocale, logMsgKey, {
-              user: interaction.user.tag,
-              command: interaction.commandName,
-              guild: interaction.guild.name,
+        } catch (logError) {
+          // Chỉ log lỗi nếu debug mode hoặc lỗi permission
+          if (client.config?.debug) {
+            console.error(T(userLocale, 'events.slash_response.log_error'), logError);
+          }
+          
+          // Thông báo cho người dùng nếu lỗi permission
+          if (logError.code === 50001 || logError.code === 50013) {
+            await notifyUser({
+              error: logError,
+              user: interaction.user,
+              source: interaction,
+              context: { 
+                channel: logChannelId ? `<#${logChannelId}>` : null,
+                action: 'ghi log lệnh',
+              },
             });
-
-          console.log(logMsgText);
+          }
         }
-      } catch (logError) {
-        console.error(T(userLocale, 'events.slash_response.log_error'), logError);
-        
-        // Xử lý lỗi khi gửi log
-        const logErrorMessage = getErrorMessage(logError, {
-          channel: logChannelId ? `<#${logChannelId}>` : null,
-          action: 'gửi log',
-        });
-        
-        // Thông báo cho người dùng nếu lỗi nghiêm trọng
-        if (logError.code === 50001 || logError.code === 50013) {
-          await notifyUser({
-            error: logError,
-            user: interaction.user,
-            source: interaction,
-            context: { 
-              channel: logChannelId ? `<#${logChannelId}>` : null,
-              action: 'ghi log lệnh',
-            },
-          });
-        }
-
-        const logMsgKey = 'events.slash_response.log_message';
-        const logMsgOverride = await getGuildTextOverride(interaction.guild?.id, logMsgKey);
-
-        const logMsgText =
-          logMsgOverride ||
-          T(userLocale, logMsgKey, {
-            user: interaction.user.tag,
-            command: interaction.commandName,
-            guild: interaction.guild.name,
-          });
-
-        console.log(logMsgText);
       }
 
       // Nếu có lỗi, xử lý lỗi

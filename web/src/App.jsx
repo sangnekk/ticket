@@ -63,13 +63,20 @@ function App() {
   }, [locale])
 
   const buildContainerFromData = (template, values) => {
+    // Check if this is a DM template (has dm_embed keys)
+    const isDmTemplate = template.keys.dm_embed_title || template.keys.dm_embed_description;
+    
     const newContainer = {
-      title: values.embed_title || values.welcome_title || values.denied_title || values.ticket_embed_title || values.dm_embed_title || '',
-      description: values.embed_description || values.welcome_description || values.denied_description || values.ticket_embed_description || values.dm_embed_description || '',
+      title: values.dm_embed_title || values.embed_title || values.welcome_title || values.denied_title || values.ticket_embed_title || '',
+      description: values.dm_embed_description || values.embed_description || values.welcome_description || values.denied_description || values.ticket_embed_description || '',
       accentColor: template.accentColor || '#5865F2',
-      image: values.embed_image || values.welcome_image || values.denied_image || '',
+      image: values.dm_embed_image || values.ticket_embed_image || values.embed_image || values.welcome_image || values.denied_image || '',
       buttons: [],
-      footer: `-# J & D Store - Ticket System • <t:${Math.floor(Date.now() / 1000)}:f>`
+      footer: isDmTemplate 
+        ? `-# J & D Store - Cảm ơn bạn! • <t:${Math.floor(Date.now() / 1000)}:f>`
+        : `-# J & D Store - Ticket System • <t:${Math.floor(Date.now() / 1000)}:f>`,
+      // Track which type of embed this is
+      embedType: isDmTemplate ? 'dm' : 'ticket'
     }
     
     if (template.buttons && template.buttons.length > 0) {
@@ -181,9 +188,9 @@ function App() {
       
       // Map container fields to locale keys
       const fieldMappings = {
-        title: ['embed_title', 'welcome_title', 'denied_title', 'ticket_embed_title', 'dm_embed_title'],
-        description: ['embed_description', 'welcome_description', 'denied_description', 'ticket_embed_description', 'dm_embed_description'],
-        image: ['embed_image', 'welcome_image', 'denied_image']
+        title: ['dm_embed_title', 'embed_title', 'welcome_title', 'denied_title', 'ticket_embed_title'],
+        description: ['dm_embed_description', 'embed_description', 'welcome_description', 'denied_description', 'ticket_embed_description'],
+        image: ['dm_embed_image', 'ticket_embed_image', 'embed_image', 'welcome_image', 'denied_image']
       }
       
       // Save title

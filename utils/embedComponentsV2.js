@@ -437,6 +437,34 @@ class ComponentsV2ContainerWrapper {
     return this;
   }
 
+  // Helper method để thêm image URL trực tiếp dùng MediaGallery
+  addImage(imageUrl) {
+    if (!imageUrl) return this;
+    
+    try {
+      const gallery = new MediaGalleryBuilder().addItems(
+        new MediaGalleryItemBuilder().setURL(imageUrl)
+      );
+      this.containerBuilder.addMediaGalleryComponents(gallery);
+    } catch (err) {
+      console.error('Error adding image to container:', err);
+    }
+    return this;
+  }
+
+  // Helper method để thêm image dùng FileBuilder (unfurled)
+  addUnfurledImage(imageUrl) {
+    if (!imageUrl) return this;
+    
+    try {
+      const file = new FileBuilder().setURL(imageUrl);
+      this.containerBuilder.addFileComponents(file);
+    } catch (err) {
+      console.error('Error adding unfurled image to container:', err);
+    }
+    return this;
+  }
+
   addFile(fileBuilder) {
     this.containerBuilder.addFileComponents(fileBuilder);
     return this;

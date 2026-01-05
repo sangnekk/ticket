@@ -70,67 +70,23 @@ module.exports = {
         });
       }
 
-      const logChannelId = await getGuildLogChannelId(message.guild?.id);
+      // Lấy logChannelId từ guild settings, fallback về config.json
+      const guildLogChannelId = await getGuildLogChannelId(message.guild?.id);
+      const logChannelId = guildLogChannelId || client.config?.logChannelId;
 
-      // Gửi log
-      try {
-        if (logChannelId) {
+      // Gửi log vào channel (không log ra console nếu có logChannelId)
+      if (logChannelId) {
+        try {
           const logChannel = await client.channels.fetch(logChannelId);
           if (logChannel) {
             await logChannel.send({ embeds: [logEmbed] });
-          } else {
-            const notFoundKey = 'events.command_response.log_channel_not_found';
-            const logMsgKey = 'events.command_response.log_message';
-
-            const notFoundOverride = await getGuildTextOverride(message.guild?.id, notFoundKey);
-            const logMsgOverride = await getGuildTextOverride(message.guild?.id, logMsgKey);
-
-            const notFoundText =
-              notFoundOverride ||
-              T(userLocale, notFoundKey, {
-                channel: logChannelId,
-              });
-
-            const logMsgText =
-              logMsgOverride ||
-              T(userLocale, logMsgKey, {
-                user: message.author.tag,
-                command: message.content,
-                guild: message.guild.name,
-              });
-
-            console.log(notFoundText);
-            console.log(logMsgText);
           }
-        } else {
-          const logMsgKey = 'events.command_response.log_message';
-          const logMsgOverride = await getGuildTextOverride(message.guild?.id, logMsgKey);
-
-          const logMsgText =
-            logMsgOverride ||
-            T(userLocale, logMsgKey, {
-              user: message.author.tag,
-              command: message.content,
-              guild: message.guild.name,
-            });
-
-          console.log(logMsgText);
+        } catch (logError) {
+          // Chỉ log lỗi nếu không fetch được channel
+          if (client.config?.debug) {
+            console.error(T(userLocale, 'events.command_response.log_error'), logError);
+          }
         }
-      } catch (logError) {
-        console.error(T(userLocale, 'events.command_response.log_error'), logError);
-
-        const logMsgKey = 'events.command_response.log_message';
-        const logMsgOverride = await getGuildTextOverride(message.guild?.id, logMsgKey);
-
-        const logMsgText =
-          logMsgOverride ||
-          T(userLocale, logMsgKey, {
-            user: message.author.tag,
-            command: message.content,
-            guild: message.guild.name,
-          });
-
-        console.log(logMsgText);
       }
 
       // Nếu có lỗi, xử lý lỗi

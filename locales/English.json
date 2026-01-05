@@ -237,6 +237,7 @@
       "error": "❌ An error occurred while closing the ticket!",
       "embed_title": "🔒 Close Ticket",
       "embed_description": "Do you want to close this ticket?\n\n**Note:** If the ticket has been claimed, only Staff can delete it.",
+      "embed_image": "https://i.imgur.com/your-close-banner.png",
       "button_close": "🗑️ Close Ticket"
     },
     "dm": {
@@ -248,9 +249,11 @@
       "error": "❌ An error occurred!",
       "ticket_embed_title": "✅ Order Completed",
       "ticket_embed_description": "Order for {user} has been completed!\n\n**Order:** {reason}\n**Processed by:** {staff}",
+      "ticket_embed_image": "https://i.imgur.com/your-ticket-complete-banner.png",
       "button_delete": "🗑️ Delete Ticket",
       "dm_embed_title": "📦 Notification from J & D Store",
       "dm_embed_description": "Shop owner **{staff}** has sent you a message!\n\n**Your order has been completed**\n\n**Order:** {reason}\n\nPlease leave us a review at <#1384052073439690813>\n\nThank you for shopping at **J & D Store**\n\nYour ticket: {channel}",
+      "dm_embed_image": "https://i.imgur.com/your-dm-banner.png",
       "dm_success": "✅ DM notification sent to {user}!",
       "dm_failed": "⚠️ Cannot send DM to {user}. User may have DMs disabled."
     }

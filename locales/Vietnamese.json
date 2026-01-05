@@ -195,7 +195,7 @@
 			"error": "❌ Đã xảy ra lỗi khi thiết lập hệ thống ticket!",
 			"embed_title": "🎫 Hệ Thống Ticket",
 			"embed_description": "**Chào mừng bạn đến với hệ thống hỗ trợ!**\n\nVui lòng chọn loại ticket phù hợp với nhu cầu của bạn:\n\n📦 **Mua Hàng** - Tạo ticket để mua sản phẩm\n❓ **Hỗ Trợ** - Tạo ticket để được hỗ trợ\n\n*Lưu ý: Mỗi loại ticket bạn chỉ được tạo 1 ticket duy nhất.*",
-			"embed_image": "https://i.imgur.com/your-ticket-banner.png",
+			"embed_image": "https://i.imgur.com/7bPHnXa.png",
 			"button_buy": "Mua Hàng",
 			"button_buy_emoji": "📦",
 			"button_support": "Hỗ Trợ",
@@ -234,6 +234,7 @@
 			"error": "❌ Đã xảy ra lỗi khi đóng ticket!",
 			"embed_title": "🔒 Đóng Ticket",
 			"embed_description": "Bạn có muốn đóng ticket này không?\n\n**Lưu ý:** Nếu ticket đã được claim, chỉ Staff mới có thể xóa ticket.",
+			"embed_image": "https://i.imgur.com/your-close-banner.png",
 			"button_close": "🗑️ Đóng Ticket"
 		},
 		"dm": {
@@ -245,9 +246,11 @@
 			"error": "❌ Đã xảy ra lỗi!",
 			"ticket_embed_title": "✅ Đơn Hàng Hoàn Thành",
 			"ticket_embed_description": "Đơn hàng của {user} đã được hoàn thành!\n\n**Đơn Hàng:** {reason}\n**Xử lý bởi:** {staff}",
+			"ticket_embed_image": "https://i.imgur.com/your-ticket-complete-banner.png",
 			"button_delete": "🗑️ Xóa Ticket",
 			"dm_embed_title": "📦 Thông Báo Từ J & D Store",
 			"dm_embed_description": "Chủ sốp **{staff}** đã gửi cho bạn 1 tin nhắn!\n\n**Đơn hàng của bạn đã được hoàn thành**\n\n**Đơn Hàng:** {reason}\n\nXin hãy gửi cho chúng tui 1 legit ở <#1384052073439690813>\n\nCảm ơn bạn đã mua hàng ở **J & D Store**\n\nTicket của bạn: {channel}",
+			"dm_embed_image": "https://i.imgur.com/your-dm-banner.png",
 			"dm_success": "✅ Đã gửi thông báo DM cho {user}!",
 			"dm_failed": "⚠️ Không thể gửi DM cho {user}. User có thể đã tắt DM."
 		}

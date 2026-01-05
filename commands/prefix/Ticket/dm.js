@@ -1,4 +1,9 @@
-const { ButtonStyle, PermissionFlagsBits } = require('discord.js');
+const {
+  ButtonStyle,
+  PermissionFlagsBits,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
+} = require('discord.js');
 const { prisma, getGuildLanguage } = require('../../../utils/prisma');
 const { GT } = require('../../../utils/guildI18n');
 const EmbedComponentsV2 = require('../../../utils/embedComponentsV2');
@@ -59,6 +64,7 @@ module.exports = {
       await message.delete().catch(() => {});
 
       // Tạo container gửi vào ticket với Components V2
+      const ticketImage = await GT(guild.id, locale, 'ticket.dm.ticket_embed_image');
       const ticketContainer = EmbedComponentsV2.createContainer();
       
       ticketContainer.addTextDisplay(`## ${await GT(guild.id, locale, 'ticket.dm.ticket_embed_title')}`);
@@ -68,14 +74,22 @@ module.exports = {
         reason: reason,
         staff: `${author}`,
       }));
+
+      // Thêm MediaGallery nếu có image
+      if (ticketImage && ticketImage !== 'ticket.dm.ticket_embed_image') {
+        const gallery = new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL(ticketImage)
+        );
+        ticketContainer.addMediaGallery(gallery);
+      }
+
       ticketContainer.addSeparator({ divider: true });
       
       // Button xóa ticket
       ticketContainer.addButton(
         await GT(guild.id, locale, 'ticket.dm.button_delete'),
         `ticket_close_${channel.id}`,
-        ButtonStyle.Danger,
-        { emoji: '🗑️' }
+        ButtonStyle.Danger
       );
       
       ticketContainer.addTextDisplay(`-# J & D Store • <t:${Math.floor(Date.now() / 1000)}:f>`);
@@ -83,6 +97,7 @@ module.exports = {
       await channel.send(ticketContainer.build());
 
       // Tạo container gửi DM cho user với Components V2
+      const dmImage = await GT(guild.id, locale, 'ticket.dm.dm_embed_image');
       const dmContainer = EmbedComponentsV2.createContainer();
       
       dmContainer.addTextDisplay(`## ${await GT(guild.id, locale, 'ticket.dm.dm_embed_title')}`);
@@ -92,6 +107,15 @@ module.exports = {
         reason: reason,
         channel: `<#${channel.id}>`,
       }));
+
+      // Thêm MediaGallery nếu có image
+      if (dmImage && dmImage !== 'ticket.dm.dm_embed_image') {
+        const gallery = new MediaGalleryBuilder().addItems(
+          new MediaGalleryItemBuilder().setURL(dmImage)
+        );
+        dmContainer.addMediaGallery(gallery);
+      }
+
       dmContainer.addTextDisplay(`-# J & D Store - Cảm ơn bạn! • <t:${Math.floor(Date.now() / 1000)}:f>`);
 
       // Gửi DM

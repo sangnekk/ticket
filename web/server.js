@@ -116,7 +116,7 @@ function extractEmbedInfo(content, filePath) {
     // Pattern: addTextDisplay with lang.get for title
     /addTextDisplay\s*\(\s*`[^`]*\$\{lang\.get\s*\(\s*['"`]([^'"`]+)['"`]\s*\)\}[^`]*`\s*\)/g,
     // Pattern: lang.get for embed_title, embed_description, etc.
-    /lang\.get\s*\(\s*['"`]([^'"`]*(?:embed_title|embed_description|embed_image|welcome_title|welcome_description|denied_title|denied_description|ticket_embed_title|dm_embed_title)[^'"`]*)['"`]\s*\)/g,
+    /lang\.get\s*\(\s*['"`]([^'"`]*(?:embed_title|embed_description|embed_image|welcome_title|welcome_description|welcome_image|denied_title|denied_description|denied_image|ticket_embed_title|ticket_embed_description|ticket_embed_image|dm_embed_title|dm_embed_description|dm_embed_image)[^'"`]*)['"`]\s*\)/g,
     // Pattern: lang.get for button labels
     /lang\.get\s*\(\s*['"`]([^'"`]*(?:button_)[^'"`]*)['"`]\s*\)/g,
   ];
@@ -206,7 +206,8 @@ function buildTemplatesFromScan(localeData) {
           key.includes('welcome_') ||
           key.includes('denied_') ||
           key.includes('dm_embed') ||
-          key.includes('ticket_embed')
+          key.includes('ticket_embed') ||
+          key.includes('_image')
         );
       });
       
@@ -226,72 +227,106 @@ function buildTemplatesFromScan(localeData) {
   const templates = [];
   
   for (const [category, keys] of Object.entries(grouped)) {
-    const templateKeys = {};
-    const defaultValues = {};
+    // Check if this category has both ticket_embed and dm_embed keys
+    const hasTicketEmbed = keys.some(k => k.includes('ticket_embed'));
+    const hasDmEmbed = keys.some(k => k.includes('dm_embed'));
     
-    // Categorize keys
-    for (const key of keys) {
-      const shortKey = key.split('.').pop(); // e.g., "embed_title" from "ticket.setup.embed_title"
-      templateKeys[shortKey] = key;
-      
-      const value = getNestedValue(localeData, key);
-      if (value !== undefined) {
-        defaultValues[shortKey] = value;
+    // If both exist, split into two templates
+    if (hasTicketEmbed && hasDmEmbed) {
+      // Template for ticket embed
+      const ticketKeys = keys.filter(k => !k.includes('dm_embed') && !k.includes('dm_success') && !k.includes('dm_failed'));
+      if (ticketKeys.length > 0) {
+        templates.push(buildSingleTemplate(category, ticketKeys, localeData, fileKeyMap, 'ticket'));
       }
+      
+      // Template for DM embed
+      const dmKeys = keys.filter(k => k.includes('dm_embed'));
+      if (dmKeys.length > 0) {
+        templates.push(buildSingleTemplate(category + '.dm_user', dmKeys, localeData, fileKeyMap, 'dm'));
+      }
+    } else {
+      templates.push(buildSingleTemplate(category, keys, localeData, fileKeyMap));
     }
-    
-    // Determine template properties
-    const categoryParts = category.split('.');
-    const mainCategory = categoryParts[0]; // e.g., "ticket"
-    const subCategory = categoryParts[1] || ''; // e.g., "setup"
-    
-    // Find which files use this category
-    const sourceFiles = Object.entries(fileKeyMap)
-      .filter(([file, fileKeys]) => fileKeys.some(k => k.startsWith(category)))
-      .map(([file]) => file);
-    
-    // Detect buttons
-    const buttons = [];
-    if (templateKeys.button_buy || templateKeys.button_buy_label) {
-      buttons.push({ id: 'buy', style: 'primary', customId: 'ticket_create_buy' });
-    }
-    if (templateKeys.button_support || templateKeys.button_support_label) {
-      buttons.push({ id: 'support', style: 'secondary', customId: 'ticket_create_support' });
-    }
-    if (templateKeys.button_close) {
-      buttons.push({ id: 'close', style: 'danger', customId: 'ticket_close' });
-    }
-    if (templateKeys.button_delete) {
-      buttons.push({ id: 'delete', style: 'danger', customId: 'ticket_delete' });
-    }
-    
-    // Determine accent color based on category
-    let accentColor = '#5865F2'; // Default blurple
-    if (subCategory === 'claim' || subCategory.includes('success')) {
-      accentColor = '#23a55a'; // Green
-    } else if (subCategory === 'close' || subCategory.includes('denied') || subCategory.includes('error')) {
-      accentColor = '#ed4245'; // Red
-    }
-    
-    // Create template name
-    const templateName = categoryParts
-      .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-      .join(' - ');
-    
-    templates.push({
-      id: category,
-      name: templateName,
-      description: `Auto-detected from ${sourceFiles.length} file(s)`,
-      category: mainCategory,
-      keys: templateKeys,
-      accentColor,
-      buttons,
-      defaultValues,
-      sourceFiles
-    });
   }
   
   return templates.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+// Helper function to build a single template
+function buildSingleTemplate(category, keys, localeData, fileKeyMap, type = null) {
+  const templateKeys = {};
+  const defaultValues = {};
+  
+  // Categorize keys
+  for (const key of keys) {
+    const shortKey = key.split('.').pop(); // e.g., "embed_title" from "ticket.setup.embed_title"
+    templateKeys[shortKey] = key;
+    
+    const value = getNestedValue(localeData, key);
+    if (value !== undefined) {
+      defaultValues[shortKey] = value;
+    }
+  }
+  
+  // Determine template properties
+  const categoryParts = category.split('.');
+  const mainCategory = categoryParts[0]; // e.g., "ticket"
+  const subCategory = categoryParts[1] || ''; // e.g., "setup"
+  
+  // Find which files use this category
+  const sourceFiles = Object.entries(fileKeyMap)
+    .filter(([file, fileKeys]) => fileKeys.some(k => keys.includes(k)))
+    .map(([file]) => file);
+  
+  // Detect buttons
+  const buttons = [];
+  if (templateKeys.button_buy || templateKeys.button_buy_label) {
+    buttons.push({ id: 'buy', style: 'primary', customId: 'ticket_create_buy' });
+  }
+  if (templateKeys.button_support || templateKeys.button_support_label) {
+    buttons.push({ id: 'support', style: 'secondary', customId: 'ticket_create_support' });
+  }
+  if (templateKeys.button_close) {
+    buttons.push({ id: 'close', style: 'danger', customId: 'ticket_close' });
+  }
+  if (templateKeys.button_delete) {
+    buttons.push({ id: 'delete', style: 'danger', customId: 'ticket_delete' });
+  }
+  
+  // Determine accent color based on category/type
+  let accentColor = '#5865F2'; // Default blurple
+  if (type === 'dm') {
+    accentColor = '#5865F2'; // Blurple for DM
+  } else if (subCategory === 'claim' || subCategory.includes('success')) {
+    accentColor = '#23a55a'; // Green
+  } else if (subCategory === 'close' || subCategory.includes('denied') || subCategory.includes('error')) {
+    accentColor = '#ed4245'; // Red
+  }
+  
+  // Create template name
+  let templateName = categoryParts
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(' - ');
+  
+  // Add suffix for DM type
+  if (type === 'dm') {
+    templateName += ' (DM User)';
+  } else if (type === 'ticket') {
+    templateName += ' (Ticket Channel)';
+  }
+  
+  return {
+    id: category,
+    name: templateName,
+    description: type === 'dm' ? 'DM gửi cho user khi hoàn thành đơn' : `Auto-detected from ${sourceFiles.length} file(s)`,
+    category: mainCategory,
+    keys: templateKeys,
+    accentColor,
+    buttons,
+    defaultValues,
+    sourceFiles,
+    embedType: type || 'default'
+  };
 }
 
 // API Routes
