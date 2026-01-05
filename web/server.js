@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+import Redis from 'ioredis';
 
 const require = createRequire(import.meta.url);
 const { PrismaClient } = require('../generated');
@@ -14,6 +15,28 @@ const __dirname = path.dirname(__filename);
 const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Redis for real-time updates
+let redisPublisher = null;
+try {
+  const config = require('../config.json');
+  if (config.redis) {
+    redisPublisher = new Redis({
+      host: config.redis.host,
+      port: config.redis.port,
+      password: config.redis.password || undefined,
+      db: config.redis.db,
+    });
+    redisPublisher.on('connect', () => {
+      console.log('[Web] ✅ Redis publisher connected');
+    });
+    redisPublisher.on('error', (err) => {
+      console.error('[Web] Redis error:', err);
+    });
+  }
+} catch (err) {
+  console.warn('[Web] Redis not configured, real-time updates disabled');
+}
 
 app.use(cors());
 app.use(express.json());
@@ -371,6 +394,21 @@ app.post('/api/text-override', async (req, res) => {
       create: { guildId, key, text }
     });
 
+    // Publish update to bot via Redis
+    if (redisPublisher) {
+      try {
+        await redisPublisher.publish('bot:config:update', JSON.stringify({
+          type: 'text-override',
+          guildId,
+          config: { key, text },
+          timestamp: Date.now()
+        }));
+        console.log(`[Web] 📤 Published text override update for guild ${guildId}`);
+      } catch (err) {
+        console.error('[Web] Error publishing to Redis:', err);
+      }
+    }
+
     res.json({ success: true, data: override });
   } catch (error) {
     console.error('Error saving text override:', error);
@@ -623,6 +661,26 @@ app.post('/api/stock-config/:guildId', async (req, res) => {
       }
     });
     
+    // Publish update to bot via Redis
+    if (redisPublisher) {
+      try {
+        await redisPublisher.publish('bot:config:update', JSON.stringify({
+          type: 'stock',
+          guildId,
+          config: {
+            sections: JSON.parse(config.sections),
+            buttons: JSON.parse(config.buttons),
+            footer: config.footer,
+            enabled: config.enabled
+          },
+          timestamp: Date.now()
+        }));
+        console.log(`[Web] 📤 Published stock config update for guild ${guildId}`);
+      } catch (err) {
+        console.error('[Web] Error publishing to Redis:', err);
+      }
+    }
+    
     res.json({ 
       success: true, 
       data: {
@@ -684,11 +742,13 @@ app.listen(PORT, () => {
 
 // Cleanup on exit
 process.on('SIGINT', async () => {
+  if (redisPublisher) await redisPublisher.quit();
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
+  if (redisPublisher) await redisPublisher.quit();
   await prisma.$disconnect();
   process.exit(0);
 });
