@@ -19,6 +19,10 @@ module.exports = {
       }
 
       // Tạo log embed cho prefix command
+      const commandContent = message.content.length > 1000 
+        ? message.content.substring(0, 1000) + '...' 
+        : message.content;
+      
       const logEmbed = new EmbedBuilder()
         .setTitle(`${EmbedUtils.emojis.command} Prefix Command Log`)
         .setColor(error ? EmbedUtils.colors.error : EmbedUtils.colors.success)
@@ -31,7 +35,7 @@ module.exports = {
           },
           {
             name: `${EmbedUtils.emojis.command} Command`,
-            value: `\`${message.content}\``,
+            value: `\`${commandContent}\``,
             inline: true,
           },
           {

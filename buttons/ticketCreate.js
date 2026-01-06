@@ -15,11 +15,12 @@ module.exports = {
     const { guild, user, customId } = interaction;
     const buttonType = customId.split('_')[2]; // buy hoặc support
 
+    // Defer ngay lập tức để tránh timeout
+    await interaction.deferReply({ flags: 64 });
+
     // Lấy ngôn ngữ
     let locale = await getGuildLanguage(guild.id);
     if (!locale) locale = 'Vietnamese';
-
-    await interaction.deferReply({ flags: 64 });
 
     try {
       // Lấy config ticket

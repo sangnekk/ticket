@@ -1,11 +1,9 @@
-const { EmbedBuilder } = require('discord.js');
-
 module.exports = {
   name: 'q',
   description: 'Gửi link decor với mention user',
   aliases: ['quick', 'decor'],
   usage: '<@user/userid> <message với links>',
-  examples: ['q @user https://link1.com', 'q 123456789 https://link1.com https://link2.com Message'],
+  examples: ['q @user https://link1.com', 'q 123456789 https://link1.com Message'],
   cooldown: 3,
   permissions: {
     bot: ['SendMessages'],
@@ -15,7 +13,7 @@ module.exports = {
   async execute(message, args, client) {
     if (args.length < 2) {
       return {
-        content: '❌ Sử dụng: `q <@user/userid> <message với links>`\nVí dụ: `q @user https://link.com Message here`',
+        content: '❌ Sử dụng: `q <@user/userid> <message>`\nVí dụ: `q @user https://link.com Message here`',
       };
     }
 
@@ -23,12 +21,10 @@ module.exports = {
     let targetUser;
     const userArg = args[0];
     
-    // Check nếu là mention
     const mentionMatch = userArg.match(/^<@!?(\d+)>$/);
     if (mentionMatch) {
       targetUser = await client.users.fetch(mentionMatch[1]).catch(() => null);
     } else if (/^\d+$/.test(userArg)) {
-      // Check nếu là user ID
       targetUser = await client.users.fetch(userArg).catch(() => null);
     }
 
@@ -41,89 +37,58 @@ module.exports = {
     // Lấy message content (bỏ user arg)
     const messageContent = args.slice(1).join(' ');
 
-    // Extract links từ message
-    const urlRegex = /(https?:\/\/[^\s]+)/gi;
-    const links = messageContent.match(urlRegex) || [];
+    // Chia message thành nhiều phần nếu quá dài (Discord limit 2000 ký tự)
+    const MAX_LENGTH = 1900; // Để dư chút cho an toàn
+    const chunks = [];
     
-    // Lấy text không phải link
-    const textContent = messageContent.replace(urlRegex, '').trim();
-
-    if (links.length === 0) {
-      return {
-        content: '❌ Không tìm thấy link nào trong message!',
-      };
-    }
-
-    // Tạo embed thường
-    const embed = new EmbedBuilder()
-      .setColor('#5865F2')
-      .setTitle('🎨 Link Decor')
-      .setDescription(`Đây chỉ là thông tin để chúng tôi làm đơn. Vui lòng không quan tâm`);
-
-    // Thêm text content nếu có
-    if (textContent) {
-      embed.addFields({
-        name: '📝 Lời nhắn',
-        value: textContent,
-        inline: false,
-      });
-    }
-
-    // Phân bổ links đẹp mắt - hiển thị link trực tiếp
-    let linksText = '';
-    
-    if (links.length === 1) {
-      linksText = links[0];
-    } else if (links.length === 2) {
-      linksText = `${links[0]}\n\n${links[1]}`;
-    } else if (links.length <= 5) {
-      linksText = links.map((link, index) => `**${index + 1}.** ${link}`).join('\n\n');
+    if (messageContent.length <= MAX_LENGTH) {
+      chunks.push(messageContent);
     } else {
-      // Nhiều hơn 5 links: Chia thành 2 cột
-      const half = Math.ceil(links.length / 2);
-      const leftColumn = links.slice(0, half);
-      const rightColumn = links.slice(half);
+      // Chia theo dòng để không cắt giữa chừng
+      const lines = messageContent.split('\n');
+      let currentChunk = '';
       
-      for (let i = 0; i < half; i++) {
-        linksText += `**${i + 1}.** ${leftColumn[i]}`;
-        if (rightColumn[i]) {
-          linksText += `\n**${i + half + 1}.** ${rightColumn[i]}`;
+      for (const line of lines) {
+        if (currentChunk.length + line.length + 1 > MAX_LENGTH) {
+          if (currentChunk) {
+            chunks.push(currentChunk.trim());
+            currentChunk = '';
+          }
+          // Nếu 1 dòng quá dài, cắt theo ký tự
+          if (line.length > MAX_LENGTH) {
+            for (let i = 0; i < line.length; i += MAX_LENGTH) {
+              chunks.push(line.substring(i, i + MAX_LENGTH));
+            }
+          } else {
+            currentChunk = line;
+          }
+        } else {
+          currentChunk += (currentChunk ? '\n' : '') + line;
         }
-        linksText += '\n\n';
+      }
+      if (currentChunk) {
+        chunks.push(currentChunk.trim());
       }
     }
 
-    embed.addFields({
-      name: `📦 Link${links.length > 1 ? 's' : ''} (${links.length})`,
-      value: linksText,
-      inline: false,
-    });
-
-    // Footer
-    embed.setFooter({
-      text: `Gửi bởi ${message.author.username} • ${new Date().toLocaleString('vi-VN')}`,
-      iconURL: message.author.displayAvatarURL(),
-    });
-
     // Gửi vào DM của user
     try {
-      await targetUser.send({ embeds: [embed] });
+      for (const chunk of chunks) {
+        await targetUser.send({ content: chunk });
+      }
       
       // Xóa message gốc
       try {
         await message.delete();
-      } catch (e) {
-        // Ignore nếu không xóa được
-      }
+      } catch (e) {}
 
-      // Gửi thông báo trong channel (không return vì message đã bị xóa)
+      // Gửi thông báo trong channel
       await message.channel.send({
-        content: '✅ Link deco đã được gửi đi',
+        content: `✅ Đã gửi tin nhắn (${chunks.length} phần)`,
       });
       
-      return null; // Không return gì để tránh commandResponse xử lý
+      return null;
     } catch (error) {
-      // Nếu không gửi được DM (user tắt DM)
       return {
         content: '❌ Không thể gửi DM cho user này! User có thể đã tắt DM.',
       };
