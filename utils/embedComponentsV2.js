@@ -556,10 +556,8 @@ class ComponentsV2ContainerWrapper {
       payload.flags |= MessageFlags.Ephemeral;
     }
 
-    // Ensure no invalid nonce is set
-    if (payload.nonce !== undefined && payload.nonce !== null) {
-      delete payload.nonce;
-    }
+    // Don't set nonce at all - let Discord.js handle it
+    // This prevents the "Message nonce must be an integer or a string" error
 
     return payload;
   }

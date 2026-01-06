@@ -75,7 +75,8 @@ module.exports = {
 
         // Xóa deferred reply và gửi message mới để MediaGallery hiển thị đúng
         await interaction.deleteReply().catch(() => {});
-        return channel.send(denyContainer.build());
+        await channel.send(denyContainer.build());
+        return; // Không return Message object để tránh lỗi MessageNonceType
       }
 
       // Nếu là staff hoặc admin, xóa ticket
@@ -130,7 +131,8 @@ module.exports = {
 
         // Xóa deferred reply và gửi message mới để MediaGallery hiển thị đúng
         await interaction.deleteReply().catch(() => {});
-        return channel.send(denyContainer.build());
+        await channel.send(denyContainer.build());
+        return; // Không return Message object để tránh lỗi MessageNonceType
       }
     } catch (error) {
       console.error('Lỗi khi close ticket:', error);

@@ -1,4 +1,4 @@
-const { ButtonStyle } = require('discord.js');
+const { ButtonStyle, EmbedBuilder, ActionRowBuilder, ButtonBuilder, MessageFlags } = require('discord.js');
 const EmbedComponentsV2 = require('../../../utils/embedComponentsV2');
 const { GT } = require('../../../utils/guildI18n');
 const { getStockConfig } = require('../../../utils/prisma');
@@ -11,18 +11,15 @@ function replacePlaceholders(text, context) {
   const now = Math.floor(Date.now() / 1000);
   
   return text
-    // User placeholders
     .replace(/\{user\}/g, user ? `<@${user.id}>` : '')
     .replace(/\{user\.tag\}/g, user?.tag || user?.username || '')
     .replace(/\{user\.name\}/g, user?.username || '')
     .replace(/\{user\.id\}/g, user?.id || '')
     .replace(/\{user\.avatar\}/g, user?.displayAvatarURL?.({ size: 256 }) || '')
-    // Guild placeholders
     .replace(/\{guild\.name\}/g, guild?.name || '')
     .replace(/\{guild\.id\}/g, guild?.id || '')
     .replace(/\{guild\.memberCount\}/g, guild?.memberCount?.toString() || '0')
     .replace(/\{guild\.icon\}/g, guild?.iconURL?.({ size: 256 }) || '')
-    // Time placeholders
     .replace(/\{timestamp\}/g, now.toString())
     .replace(/\{timestamp:R\}/g, `<t:${now}:R>`)
     .replace(/\{timestamp:F\}/g, `<t:${now}:F>`)
@@ -31,7 +28,6 @@ function replacePlaceholders(text, context) {
     .replace(/\{timestamp:T\}/g, `<t:${now}:T>`)
     .replace(/\{date\}/g, new Date().toLocaleDateString('vi-VN'))
     .replace(/\{time\}/g, new Date().toLocaleTimeString('vi-VN'))
-    // Channel placeholder
     .replace(/\{channel\}/g, message?.channel ? `<#${message.channel.id}>` : '');
 }
 
@@ -49,7 +45,7 @@ function getButtonStyle(style) {
 
 module.exports = {
   name: 'stock',
-  description: 'Gửi embed stock với Components V2',
+  description: 'Gửi embed stock với nhiều embeds',
   aliases: ['st'],
   usage: '',
   examples: [''],
@@ -63,7 +59,6 @@ module.exports = {
     const guildId = message.guild.id;
     const userLocale = message.guild?.preferredLocale || client.config?.defaultLanguage || 'Vietnamese';
 
-    // Lấy config stock từ database
     const config = await getStockConfig(guildId);
 
     if (!config || !config.enabled) {
@@ -72,114 +67,123 @@ module.exports = {
       };
     }
 
-    // Parse sections và buttons từ JSON
-    let sections = [];
+    let embeds = [];
     let buttons = [];
     
     try {
-      sections = JSON.parse(config.sections || '[]');
+      embeds = JSON.parse(config.embeds || '[]');
       buttons = JSON.parse(config.buttons || '[]');
     } catch (e) {
       console.error('Error parsing stock config:', e);
+      return { content: '❌ Lỗi cấu hình stock!' };
+    }
+
+    if (embeds.length === 0) {
       return {
-        content: '❌ Lỗi cấu hình stock! Vui lòng kiểm tra lại.',
+        content: await GT(guildId, userLocale, 'stock.no_embeds') || '❌ Chưa có embed nào! Vui lòng thêm qua web dashboard.',
       };
     }
 
-    if (sections.length === 0) {
-      return {
-        content: await GT(guildId, userLocale, 'stock.no_sections') || '❌ Chưa có nội dung stock! Vui lòng thêm sections qua web dashboard.',
-      };
-    }
-
-    // Context cho placeholders
     const context = {
       user: message.author,
       guild: message.guild,
       message: message,
     };
 
-    // Tạo container với Components V2
-    const container = EmbedComponentsV2.createContainer();
+    // Send each embed with its own buttons
+    for (let i = 0; i < embeds.length; i++) {
+      const embedConfig = embeds[i];
+      const embedButtons = embedConfig.buttons || []; // Buttons riêng của embed này
+      
+      try {
+        if (embedConfig.type === 'componentsv2') {
+          // Components V2 Mode
+          const container = EmbedComponentsV2.createContainer();
 
-    // Render từng section
-    for (const section of sections) {
-      switch (section.type) {
-        case 'heading':
-          const level = section.level || 2;
-          const headingPrefix = '#'.repeat(level) + ' ';
-          container.addTextDisplay(headingPrefix + replacePlaceholders(section.content, context));
-          break;
-
-        case 'text':
-          container.addTextDisplay(replacePlaceholders(section.content, context));
-          break;
-
-        case 'separator':
-          const separatorOptions = {
-            divider: section.divider !== false,
-          };
-          
-          // Map spacing to valid values
-          if (section.spacing) {
-            const spacingMap = {
-              'small': 'Small',
-              'Small': 'Small',
-              'large': 'Large',
-              'Large': 'Large',
-            };
-            separatorOptions.spacing = spacingMap[section.spacing] || undefined;
+          for (const section of (embedConfig.sections || [])) {
+            switch (section.type) {
+              case 'heading':
+                const level = section.level || 2;
+                const prefix = '#'.repeat(level) + ' ';
+                container.addTextDisplay(prefix + replacePlaceholders(section.content, context));
+                break;
+              case 'text':
+                container.addTextDisplay(replacePlaceholders(section.content, context));
+                break;
+              case 'separator':
+                container.addSeparator({
+                  divider: section.divider !== false,
+                  spacing: section.spacing === 'large' ? 'Large' : 'Small',
+                });
+                break;
+              case 'image':
+                if (section.url) container.addImage(replacePlaceholders(section.url, context));
+                break;
+            }
           }
-          
-          container.addSeparator(separatorOptions);
-          break;
 
-        case 'image':
-          if (section.url) {
-            container.addImage(replacePlaceholders(section.url, context));
+          if (embedConfig.footer) {
+            container.addSeparator();
+            container.addTextDisplay(replacePlaceholders(embedConfig.footer, context));
           }
-          break;
 
-        default:
-          // Unknown type, skip
-          break;
+          // Add buttons của embed này
+          for (const btn of embedButtons) {
+            if (btn.customId === 'ticket_create_buy' || btn.customId === 'ticket_create_support') {
+              container.addButton(
+                replacePlaceholders(btn.label, context),
+                btn.customId,
+                getButtonStyle(btn.style),
+                { emoji: btn.emoji || undefined }
+              );
+            }
+          }
+
+          await message.channel.send(container.build());
+
+        } else {
+          // Regular Embed Mode
+          const embed = new EmbedBuilder();
+
+          if (embedConfig.color) embed.setColor(embedConfig.color);
+          if (embedConfig.title) embed.setTitle(replacePlaceholders(embedConfig.title, context));
+          if (embedConfig.description) embed.setDescription(replacePlaceholders(embedConfig.description, context));
+          if (embedConfig.image) embed.setImage(replacePlaceholders(embedConfig.image, context));
+          if (embedConfig.thumbnail) embed.setThumbnail(replacePlaceholders(embedConfig.thumbnail, context));
+          if (embedConfig.footer) embed.setFooter({ text: replacePlaceholders(embedConfig.footer, context) });
+
+          const payload = { embeds: [embed] };
+          
+          // Add buttons của embed này
+          if (embedButtons.length > 0) {
+            const buttonRow = new ActionRowBuilder();
+            for (const btn of embedButtons) {
+              if (btn.customId === 'ticket_create_buy' || btn.customId === 'ticket_create_support') {
+                const button = new ButtonBuilder()
+                  .setLabel(replacePlaceholders(btn.label, context))
+                  .setCustomId(btn.customId)
+                  .setStyle(getButtonStyle(btn.style));
+                if (btn.emoji) button.setEmoji(btn.emoji);
+                buttonRow.addComponents(button);
+              }
+            }
+            if (buttonRow.components.length > 0) {
+              payload.components = [buttonRow];
+            }
+          }
+
+          await message.channel.send(payload);
+        }
+      } catch (err) {
+        console.error(`Error sending embed ${i}:`, err);
       }
     }
 
-    // Thêm footer nếu có
-    if (config.footer) {
-      container.addSeparator();
-      container.addTextDisplay(replacePlaceholders(config.footer, context));
-    }
-
-    // Thêm buttons nếu có (ticket buttons với customId cố định)
-    for (const btn of buttons) {
-      // Chỉ cho phép ticket buttons
-      if (btn.customId === 'ticket_create_buy' || btn.customId === 'ticket_create_support') {
-        container.addButton(
-          replacePlaceholders(btn.label, context),
-          btn.customId,
-          getButtonStyle(btn.style),
-          {
-            emoji: btn.emoji || undefined,
-          }
-        );
-      }
-    }
-
-    // Build và gửi
-    const payload = container.build();
-
-    // Gửi message mới (không reply)
-    await message.channel.send(payload);
-
-    // Xóa message gốc
+    // Delete original message
     try {
       await message.delete();
-    } catch (e) {
-      // Ignore nếu không xóa được
-    }
+    } catch (e) {}
 
-    return null; // Không cần response từ commandResponse
+    return null;
   },
 };

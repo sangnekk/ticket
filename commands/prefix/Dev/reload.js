@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const { DevID } = require('../../../config.json');
 const EmbedComponentsV2 = require('../../../utils/embedComponentsV2');
-const hotReloadManager = require('../../../utils/hotReload');
 
 module.exports = {
   name: 'reload',

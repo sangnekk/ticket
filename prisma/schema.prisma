@@ -84,14 +84,30 @@ model StockConfig {
   id          Int      @id @default(autoincrement())
   guildId     String   @unique
   enabled     Boolean  @default(true)
-  sections    String   @default("[]") // JSON array of sections
-  buttons     String   @default("[]") // JSON array of buttons
-  footer      String?  // Footer text với placeholders
+  embeds      String   @default("[]") // JSON array of embed objects
+  buttons     String   @default("[]") // JSON array of buttons (shared across all embeds)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([guildId])
 }
+
+// Embed structure in JSON:
+// {
+//   id: "unique-id",
+//   type: "componentsv2" | "regular",
+//   order: 0,
+//   // ComponentsV2 fields
+//   sections: [...],
+//   footer: "...",
+//   // Regular embed fields
+//   title: "...",
+//   description: "...",
+//   color: "#5865F2",
+//   image: "...",
+//   thumbnail: "...",
+//   footer: "..."
+// }
 
 // Section types trong JSON:
 // - { type: "text", content: "..." }

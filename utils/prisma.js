@@ -240,16 +240,14 @@ async function upsertStockConfig(guildId, data) {
     return await prisma.stockConfig.upsert({
       where: { guildId },
       update: {
-        sections: data.sections,
+        embeds: data.embeds,
         buttons: data.buttons,
-        footer: data.footer,
         enabled: data.enabled,
       },
       create: {
         guildId,
-        sections: data.sections || '[]',
+        embeds: data.embeds || '[]',
         buttons: data.buttons || '[]',
-        footer: data.footer,
         enabled: data.enabled !== false,
       },
     });

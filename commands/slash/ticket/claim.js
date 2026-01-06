@@ -19,9 +19,9 @@ module.exports = {
     let locale = await getGuildLanguage(guild.id);
     if (!locale) locale = 'Vietnamese';
 
-    // Defer reply ngay lập tức
+    // Defer reply ephemeral (chỉ user nhìn thấy)
     try {
-      await interaction.deferReply({ flags: 64 });
+      await interaction.deferReply({ ephemeral: true });
     } catch (deferError) {
       console.error('Không thể defer reply:', deferError);
       return; // Interaction đã hết hạn, không thể xử lý
@@ -90,33 +90,7 @@ module.exports = {
 
       // Cập nhật topic channel
       await channel.setTopic(`Ticket opened by "${ownerName}" | claimed by ${user.username}`);
-
-      // Gửi container thông báo
-      const claimImage = await GT(guild.id, locale, 'ticket.claim.embed_image');
-      
-      const claimContainer = EmbedComponentsV2.createContainer();
-      claimContainer.addTextDisplay(
-        `## ${await GT(guild.id, locale, 'ticket.claim.embed_title')}`
-      );
-      claimContainer.addSeparator({ divider: true });
-      claimContainer.addTextDisplay(
-        await GT(guild.id, locale, 'ticket.claim.embed_description', { staff: `${user}` })
-      );
-
-      // Thêm MediaGallery nếu có image
-      if (claimImage && claimImage !== 'ticket.claim.embed_image') {
-        const gallery = new MediaGalleryBuilder().addItems(
-          new MediaGalleryItemBuilder().setURL(claimImage)
-        );
-        claimContainer.addMediaGallery(gallery);
-      }
-
-      claimContainer.addTextDisplay(
-        `-# <t:${Math.floor(Date.now() / 1000)}:f>`
-      );
-
-      await channel.send(claimContainer.build());
-
+      // Reply ephemeral cho user
       await interaction.editReply({
         content: await GT(guild.id, locale, 'ticket.claim.success'),
       }).catch(err => {

@@ -24,21 +24,16 @@ class ConfigSyncManager {
       this.subscriber = getRedisSubscriber();
       this.publisher = getRedisPublisher();
 
-      // Subscribe to config update channel
-      await this.subscriber.subscribe('bot:config:update', (err) => {
-        if (err) {
-          console.error('[ConfigSync] Lỗi khi subscribe:', err);
-          return;
-        }
-        console.log('[ConfigSync] ✅ Đã subscribe channel bot:config:update');
-      });
-
-      // Listen for messages
+      // Listen for messages BEFORE subscribing
       this.subscriber.on('message', (channel, message) => {
         if (channel === 'bot:config:update') {
           this.handleConfigUpdate(message);
         }
       });
+
+      // Subscribe to config update channel (ioredis returns promise)
+      await this.subscriber.subscribe('bot:config:update');
+      console.log('[ConfigSync] ✅ Đã subscribe channel bot:config:update');
 
       this.isInitialized = true;
       console.log('[ConfigSync] ✅ Config sync đã sẵn sàng');

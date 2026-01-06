@@ -620,16 +620,15 @@ app.get('/api/stock-config/:guildId', async (req, res) => {
       config = {
         guildId,
         enabled: true,
-        sections: '[]',
-        buttons: '[]',
-        footer: '-# {guild.name} • {timestamp:f}'
+        embeds: '[]',
+        buttons: '[]'
       };
     }
     
     // Parse JSON fields
     res.json({
       ...config,
-      sections: JSON.parse(config.sections || '[]'),
+      embeds: JSON.parse(config.embeds || '[]'),
       buttons: JSON.parse(config.buttons || '[]')
     });
   } catch (error) {
@@ -642,21 +641,19 @@ app.get('/api/stock-config/:guildId', async (req, res) => {
 app.post('/api/stock-config/:guildId', async (req, res) => {
   try {
     const { guildId } = req.params;
-    const { sections, buttons, footer, enabled } = req.body;
+    const { embeds, buttons, enabled } = req.body;
     
     const config = await prisma.stockConfig.upsert({
       where: { guildId },
       update: {
-        sections: JSON.stringify(sections || []),
+        embeds: JSON.stringify(embeds || []),
         buttons: JSON.stringify(buttons || []),
-        footer,
         enabled: enabled !== false
       },
       create: {
         guildId,
-        sections: JSON.stringify(sections || []),
+        embeds: JSON.stringify(embeds || []),
         buttons: JSON.stringify(buttons || []),
-        footer,
         enabled: enabled !== false
       }
     });
@@ -668,9 +665,8 @@ app.post('/api/stock-config/:guildId', async (req, res) => {
           type: 'stock',
           guildId,
           config: {
-            sections: JSON.parse(config.sections),
+            embeds: JSON.parse(config.embeds),
             buttons: JSON.parse(config.buttons),
-            footer: config.footer,
             enabled: config.enabled
           },
           timestamp: Date.now()
@@ -685,7 +681,7 @@ app.post('/api/stock-config/:guildId', async (req, res) => {
       success: true, 
       data: {
         ...config,
-        sections: JSON.parse(config.sections),
+        embeds: JSON.parse(config.embeds),
         buttons: JSON.parse(config.buttons)
       }
     });

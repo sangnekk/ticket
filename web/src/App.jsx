@@ -29,9 +29,8 @@ function App() {
   const [activeTab, setActiveTab] = useState('templates') // 'templates' or 'stock'
   const [stockConfig, setStockConfig] = useState({
     enabled: true,
-    sections: [],
+    embeds: [],
     buttons: [],
-    footer: '-# {guild.name} • {timestamp:f}'
   })
   const [isLoadingStock, setIsLoadingStock] = useState(false)
 
