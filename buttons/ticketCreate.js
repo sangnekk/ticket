@@ -49,13 +49,31 @@ module.exports = {
         : await GT(guild.id, locale, 'ticket.create.type_support');
 
       if (existingTicket) {
-        await interaction.editReply({
-          content: await GT(guild.id, locale, 'ticket.create.already_have', {
-            type: typeName,
-            channel: `<#${existingTicket.channelId}>`,
-          }),
-        });
-        return;
+        // Kiểm tra channel còn tồn tại không
+        const channelExists = await guild.channels.fetch(existingTicket.channelId).catch(() => null);
+        
+        if (!channelExists) {
+          // Channel không tồn tại, tự động cập nhật status thành closed
+          await prisma.ticket.update({
+            where: { id: existingTicket.id },
+            data: {
+              status: 'closed',
+              closedAt: new Date(),
+            },
+          });
+          
+          // Cho phép user tạo ticket mới (không return, tiếp tục flow tạo ticket)
+          console.log(`Auto-closed ticket ${existingTicket.id} - channel không tồn tại`);
+        } else {
+          // Channel vẫn còn, báo lỗi user đã có ticket
+          await interaction.editReply({
+            content: await GT(guild.id, locale, 'ticket.create.already_have', {
+              type: typeName,
+              channel: `<#${existingTicket.channelId}>`,
+            }),
+          });
+          return;
+        }
       }
 
       // Tăng counter và lấy số ticket mới
